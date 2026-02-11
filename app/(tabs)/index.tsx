@@ -1,45 +1,52 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, RefreshControl } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, Pressable } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAuth } from '@/hooks/useAuth';
 import { useWallet } from '@/hooks/useWallet';
 import { useLivePrices } from '@/hooks/useLivePrices';
+import { QuickActions } from '@/components/QuickActions';
 import { PriceCard } from '@/components/PriceCard';
-import { Colors, Typography, Spacing, BorderRadius } from '@/constants/theme';
+import { Colors, Typography, Spacing, BorderRadius, Shadows } from '@/constants/theme';
 
 export default function WalletScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const { user } = useAuth();
-  const { balance, fetchBalance, isLoading: walletLoading } = useWallet();
-  const { prices, isConnected, isLoading: pricesLoading } = useLivePrices(['BTC', 'ETH', 'USDT', 'USDC', 'BNB']);
-  const [refreshing, setRefreshing] = useState(false);
+  const { balance, fetchBalance, isLoading } = useWallet();
+  const { prices, isConnected } = useLivePrices();
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     fetchBalance();
   }, []);
 
-  const onRefresh = async () => {
-    setRefreshing(true);
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
     await fetchBalance();
-    setRefreshing(false);
+    setIsRefreshing(false);
   };
 
-  const quickActions = [
-    { icon: 'arrow-downward', label: 'Deposit', route: '/deposit', color: Colors.bullish },
-    { icon: 'arrow-upward', label: 'Withdraw', route: '/withdraw', color: Colors.bearish },
-    { icon: 'send', label: 'Transfer', route: '/transfer', color: Colors.info },
-    { icon: 'history', label: 'History', route: '/history', color: Colors.textSecondary },
-  ];
+  const formatBalance = (value: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(value);
+  };
+
+  const topPrices = prices.slice(0, 5);
 
   return (
-    <SafeAreaView style={[styles.container, { paddingTop: insets.top }]} edges={[]}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
+            tintColor={Colors.primary}
+          />
         }
       >
         {/* Header */}
@@ -48,82 +55,87 @@ export default function WalletScreen() {
             <Text style={styles.greeting}>Welcome back,</Text>
             <Text style={styles.userName}>{user?.name || 'User'}</Text>
           </View>
-          <Pressable style={styles.settingsButton} onPress={() => router.push('/settings')}>
-            <MaterialIcons name="settings" size={24} color={Colors.text} />
+          <Pressable
+            style={styles.notificationButton}
+            onPress={() => router.push('/notifications')}
+          >
+            <MaterialIcons name="notifications-none" size={24} color={Colors.text} />
+            <View style={styles.notificationBadge}>
+              <Text style={styles.notificationBadgeText}>3</Text>
+            </View>
           </Pressable>
-        </View>
-
-        {/* WebSocket Status Indicator */}
-        <View style={styles.statusBar}>
-          <View style={[styles.statusDot, { backgroundColor: isConnected ? Colors.success : Colors.error }]} />
-          <Text style={styles.statusText}>
-            {isConnected ? 'Live prices' : 'Connecting...'}
-          </Text>
         </View>
 
         {/* Balance Card */}
         <View style={styles.balanceCard}>
-          <Text style={styles.balanceLabel}>Total Balance</Text>
-          <Text style={styles.balanceAmount}>
-            ${balance ? balance.balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}
-          </Text>
-          {balance && balance.balance > 0 && (
-            <View style={styles.balanceChange}>
-              <MaterialIcons name="trending-up" size={16} color={Colors.bullish} />
-              <Text style={styles.balanceChangeText}>+2.5% today</Text>
+          <View style={styles.balanceHeader}>
+            <Text style={styles.balanceLabel}>Total Balance</Text>
+            <View style={styles.connectionBadge}>
+              <View
+                style={[
+                  styles.connectionDot,
+                  { backgroundColor: isConnected ? Colors.success : Colors.error },
+                ]}
+              />
+              <Text style={styles.connectionText}>
+                {isConnected ? 'Live' : 'Offline'}
+              </Text>
             </View>
-          )}
+          </View>
+          <Text style={styles.balanceAmount}>
+            {balance ? formatBalance(balance.total_usd) : '$0.00'}
+          </Text>
+          <View style={styles.balanceDetails}>
+            <View style={styles.balanceDetailItem}>
+              <Text style={styles.balanceDetailLabel}>Available</Text>
+              <Text style={styles.balanceDetailValue}>
+                {balance ? formatBalance(balance.available_usd) : '$0.00'}
+              </Text>
+            </View>
+            <View style={styles.balanceDetailDivider} />
+            <View style={styles.balanceDetailItem}>
+              <Text style={styles.balanceDetailLabel}>Locked</Text>
+              <Text style={styles.balanceDetailValue}>
+                {balance ? formatBalance(balance.locked_usd || 0) : '$0.00'}
+              </Text>
+            </View>
+          </View>
         </View>
 
         {/* Quick Actions */}
-        <View style={styles.quickActions}>
-          {quickActions.map((action) => (
-            <Pressable
-              key={action.label}
-              style={({ pressed }) => [
-                styles.actionButton,
-                pressed && styles.actionButtonPressed,
-              ]}
-              onPress={() => router.push(action.route as any)}
-            >
-              <View style={[styles.actionIcon, { backgroundColor: `${action.color}20` }]}>
-                <MaterialIcons name={action.icon as any} size={24} color={action.color} />
-              </View>
-              <Text style={styles.actionLabel}>{action.label}</Text>
-            </Pressable>
-          ))}
-        </View>
+        <QuickActions />
 
-        {/* Live Prices */}
+        {/* Live Prices Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Live Prices</Text>
-            <Pressable>
-              <Text style={styles.seeAll}>See All</Text>
+            <Pressable onPress={() => router.push('/(tabs)/markets')}>
+              <Text style={styles.seeAllText}>See All</Text>
             </Pressable>
           </View>
-
-          {pricesLoading ? (
-            <View style={styles.loadingContainer}>
-              <Text style={styles.loadingText}>Loading prices...</Text>
-            </View>
-          ) : (
-            <View style={styles.pricesGrid}>
-              {Object.values(prices).slice(0, 6).map((price) => (
-                <PriceCard key={price.symbol} price={price} />
-              ))}
-            </View>
-          )}
+          {topPrices.map((price) => (
+            <PriceCard key={price.symbol} price={price} />
+          ))}
         </View>
 
-        {/* Recent Activity Placeholder */}
+        {/* Recent Activity */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Recent Activity</Text>
-          <View style={styles.emptyState}>
-            <MaterialIcons name="receipt-long" size={48} color={Colors.textMuted} />
-            <Text style={styles.emptyStateText}>No recent transactions</Text>
-            <Text style={styles.emptyStateSubtext}>Your activity will appear here</Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Recent Activity</Text>
+            <Pressable onPress={() => router.push('/(tabs)/history')}>
+              <Text style={styles.seeAllText}>See All</Text>
+            </Pressable>
           </View>
+          <Pressable
+            style={styles.activityCard}
+            onPress={() => router.push('/(tabs)/history')}
+          >
+            <MaterialIcons name="receipt-long" size={48} color={Colors.textMuted} />
+            <Text style={styles.activityEmptyText}>No recent activity</Text>
+            <Text style={styles.activityEmptySubtext}>
+              Your transactions will appear here
+            </Text>
+          </Pressable>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -136,162 +148,149 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   scrollContent: {
-    padding: Spacing.md,
     paddingBottom: Spacing.xxl,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Spacing.lg,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
   },
   greeting: {
     ...Typography.body,
     color: Colors.textSecondary,
-    marginBottom: 4,
   },
   userName: {
     ...Typography.title,
     color: Colors.text,
     fontWeight: '700',
   },
-  settingsButton: {
-    width: 44,
-    height: 44,
-    borderRadius: BorderRadius.md,
-    backgroundColor: Colors.surfaceElevated,
+  notificationButton: {
+    position: 'relative',
+    padding: Spacing.xs,
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    backgroundColor: Colors.error,
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 4,
   },
-  statusBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: Spacing.xs,
-    marginBottom: Spacing.md,
-  },
-  statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: Spacing.xs,
-  },
-  statusText: {
+  notificationBadgeText: {
     ...Typography.caption,
-    color: Colors.textSecondary,
-    fontWeight: '600',
+    color: Colors.background,
+    fontSize: 11,
+    fontWeight: '700',
   },
   balanceCard: {
     backgroundColor: Colors.surfaceElevated,
-    borderRadius: BorderRadius.lg,
+    marginHorizontal: Spacing.md,
+    marginVertical: Spacing.sm,
     padding: Spacing.xl,
-    marginBottom: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    ...Shadows.lg,
+  },
+  balanceHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: Colors.borderLight,
+    marginBottom: Spacing.sm,
   },
   balanceLabel: {
     ...Typography.body,
     color: Colors.textSecondary,
-    marginBottom: Spacing.xs,
   },
-  balanceAmount: {
-    fontSize: 36,
-    fontWeight: '700',
-    color: Colors.primary,
-    marginBottom: Spacing.xs,
-  },
-  balanceChange: {
+  connectionBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: `${Colors.bullish}20`,
+    backgroundColor: Colors.surface,
     paddingHorizontal: Spacing.sm,
     paddingVertical: 4,
     borderRadius: BorderRadius.sm,
   },
-  balanceChangeText: {
+  connectionDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginRight: 4,
+  },
+  connectionText: {
     ...Typography.caption,
-    color: Colors.bullish,
+    color: Colors.textSecondary,
+    fontSize: 10,
     fontWeight: '600',
-    marginLeft: 4,
   },
-  quickActions: {
+  balanceAmount: {
+    fontSize: 40,
+    fontWeight: '700',
+    color: Colors.text,
+    marginBottom: Spacing.md,
+  },
+  balanceDetails: {
     flexDirection: 'row',
-    gap: Spacing.md,
-    marginBottom: Spacing.xl,
+    alignItems: 'center',
   },
-  actionButton: {
+  balanceDetailItem: {
     flex: 1,
-    backgroundColor: Colors.surfaceElevated,
-    borderRadius: BorderRadius.md,
-    padding: Spacing.md,
-    alignItems: 'center',
-    minHeight: 80,
-    justifyContent: 'center',
   },
-  actionButtonPressed: {
-    opacity: 0.7,
-    transform: [{ scale: 0.98 }],
+  balanceDetailDivider: {
+    width: 1,
+    height: 32,
+    backgroundColor: Colors.border,
+    marginHorizontal: Spacing.md,
   },
-  actionIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: BorderRadius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing.xs,
-  },
-  actionLabel: {
+  balanceDetailLabel: {
     ...Typography.caption,
+    color: Colors.textSecondary,
+    marginBottom: 4,
+  },
+  balanceDetailValue: {
+    ...Typography.body,
     color: Colors.text,
     fontWeight: '600',
   },
   section: {
-    marginBottom: Spacing.xl,
+    marginTop: Spacing.lg,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingHorizontal: Spacing.md,
     marginBottom: Spacing.md,
   },
   sectionTitle: {
-    ...Typography.subheading,
+    ...Typography.heading,
     color: Colors.text,
     fontWeight: '700',
   },
-  seeAll: {
+  seeAllText: {
     ...Typography.body,
     color: Colors.primary,
     fontWeight: '600',
   },
-  loadingContainer: {
-    paddingVertical: Spacing.xl,
+  activityCard: {
+    backgroundColor: Colors.surfaceElevated,
+    marginHorizontal: Spacing.md,
+    padding: Spacing.xl,
+    borderRadius: BorderRadius.lg,
     alignItems: 'center',
   },
-  loadingText: {
+  activityEmptyText: {
     ...Typography.body,
     color: Colors.textSecondary,
-  },
-  pricesGrid: {
-    gap: Spacing.sm,
-  },
-  emptyState: {
-    backgroundColor: Colors.surfaceElevated,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.xxl,
-    alignItems: 'center',
-  },
-  emptyStateText: {
-    ...Typography.body,
-    color: Colors.text,
     fontWeight: '600',
     marginTop: Spacing.md,
-    marginBottom: Spacing.xs,
   },
-  emptyStateSubtext: {
+  activityEmptySubtext: {
     ...Typography.caption,
-    color: Colors.textSecondary,
-    textAlign: 'center',
+    color: Colors.textMuted,
+    marginTop: Spacing.xs,
   },
 });

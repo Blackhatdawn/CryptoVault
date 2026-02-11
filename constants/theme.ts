@@ -35,6 +35,13 @@ export const Colors = {
   
   // Overlays
   overlay: 'rgba(0, 0, 0, 0.8)',
+  
+  // Chart colors
+  chartGreen: '#10B981',
+  chartRed: '#EF4444',
+  chartBlue: '#3B82F6',
+  chartPurple: '#8B5CF6',
+  chartOrange: '#F59E0B',
 };
 
 export const Spacing = {
@@ -101,5 +108,12 @@ export const Shadows = {
     shadowOpacity: 0.30,
     shadowRadius: 4.65,
     elevation: 4,
+  },
+  lg: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 6.27,
+    elevation: 6,
   },
 };
