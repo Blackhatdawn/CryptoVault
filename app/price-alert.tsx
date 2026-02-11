@@ -6,6 +6,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Colors, Typography, Spacing, BorderRadius } from '@/constants/theme';
+import { api } from '@/services/api';
 
 const CRYPTO_OPTIONS = [
   { symbol: 'BTC', name: 'Bitcoin' },
@@ -29,16 +30,23 @@ export default function PriceAlertScreen() {
 
     setLoading(true);
     try {
-      // TODO: Call API to create price alert
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const result = await api.createPriceAlert({
+        symbol: selectedCrypto,
+        condition,
+        target_price: parseFloat(targetPrice),
+      });
       
-      Alert.alert(
-        'Alert Created',
-        `You'll be notified when ${selectedCrypto} goes ${condition} $${targetPrice}`,
-        [{ text: 'OK', onPress: () => router.back() }]
-      );
-    } catch (error) {
-      Alert.alert('Error', 'Failed to create price alert');
+      if (result.success || result.data) {
+        Alert.alert(
+          'Alert Created',
+          `You'll be notified when ${selectedCrypto} goes ${condition} $${targetPrice}`,
+          [{ text: 'OK', onPress: () => router.back() }]
+        );
+      } else {
+        Alert.alert('Error', result.error || 'Failed to create price alert');
+      }
+    } catch (error: any) {
+      Alert.alert('Error', error.response?.data?.message || 'Failed to create price alert');
     } finally {
       setLoading(false);
     }

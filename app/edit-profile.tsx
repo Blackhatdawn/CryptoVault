@@ -6,6 +6,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useAuth } from '@/hooks/useAuth';
 import { Colors, Typography, Spacing, BorderRadius } from '@/constants/theme';
 import { Button, Input } from '@/components/ui';
+import { api } from '@/services/api';
 
 export default function EditProfileScreen() {
   const router = useRouter();
@@ -20,12 +21,20 @@ export default function EditProfileScreen() {
   const handleSave = async () => {
     setIsLoading(true);
     try {
-      // TODO: API call to update profile
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      Alert.alert('Success', 'Profile updated successfully');
-      router.back();
-    } catch (error) {
-      Alert.alert('Error', 'Failed to update profile');
+      const result = await api.updateProfile({
+        name,
+        phone,
+        address,
+      });
+      
+      if (result.success || result.user) {
+        Alert.alert('Success', 'Profile updated successfully');
+        router.back();
+      } else {
+        Alert.alert('Error', result.error || 'Failed to update profile');
+      }
+    } catch (error: any) {
+      Alert.alert('Error', error.response?.data?.message || 'Failed to update profile');
     } finally {
       setIsLoading(false);
     }

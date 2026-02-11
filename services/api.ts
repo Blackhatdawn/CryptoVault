@@ -138,6 +138,73 @@ class ApiClient {
     const response = await this.client.get(API_CONFIG.endpoints.crypto);
     return response.data;
   }
+
+  // Trading/Orders API
+  async createOrder(orderData: any): Promise<ApiResponse<any>> {
+    const response = await this.client.post('/api/orders', orderData);
+    return response.data;
+  }
+
+  async getOrders(): Promise<ApiResponse<any[]>> {
+    const response = await this.client.get('/api/orders');
+    return response.data;
+  }
+
+  async cancelOrder(orderId: string): Promise<ApiResponse<any>> {
+    const response = await this.client.delete(`/api/orders/${orderId}`);
+    return response.data;
+  }
+
+  // Price History API
+  async getPriceHistory(symbol: string, timeframe: string): Promise<number[]> {
+    const response = await this.client.get(`/api/crypto/${symbol}/history`, {
+      params: { interval: timeframe }
+    });
+    return response.data.prices || [];
+  }
+
+  // Price Alerts API
+  async createPriceAlert(alertData: any): Promise<ApiResponse<any>> {
+    const response = await this.client.post('/api/alerts', alertData);
+    return response.data;
+  }
+
+  async getPriceAlerts(): Promise<ApiResponse<any[]>> {
+    const response = await this.client.get('/api/alerts');
+    return response.data;
+  }
+
+  async deletePriceAlert(alertId: string): Promise<ApiResponse<any>> {
+    const response = await this.client.delete(`/api/alerts/${alertId}`);
+    return response.data;
+  }
+
+  // Profile API
+  async updateProfile(data: any): Promise<ApiResponse<User>> {
+    const response = await this.client.put('/api/auth/profile', data);
+    return response.data;
+  }
+
+  async updatePassword(data: { currentPassword: string; newPassword: string }): Promise<ApiResponse<any>> {
+    const response = await this.client.put('/api/auth/password', data);
+    return response.data;
+  }
+
+  // Notifications API
+  async getNotifications(): Promise<ApiResponse<any[]>> {
+    const response = await this.client.get('/api/notifications');
+    return response.data;
+  }
+
+  async markNotificationRead(notificationId: string): Promise<ApiResponse<any>> {
+    const response = await this.client.put(`/api/notifications/${notificationId}/read`);
+    return response.data;
+  }
+
+  async markAllNotificationsRead(): Promise<ApiResponse<any>> {
+    const response = await this.client.put('/api/notifications/read-all');
+    return response.data;
+  }
 }
 
 export const api = new ApiClient();
