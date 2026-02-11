@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { useRouter } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Colors, BorderRadius, Typography, Spacing, Shadows } from '@/constants/theme';
 import type { CryptoPrice } from '@/types';
@@ -9,10 +10,23 @@ interface PriceCardProps {
 }
 
 export const PriceCard: React.FC<PriceCardProps> = ({ price }) => {
+  const router = useRouter();
   const isPositive = price.change_24h >= 0;
 
+  const handlePress = () => {
+    router.push({
+      pathname: '/price-detail',
+      params: {
+        symbol: price.symbol,
+        name: price.name,
+        price: price.price_usd.toString(),
+        change: price.change_24h.toString(),
+      },
+    });
+  };
+
   return (
-    <View style={styles.container}>
+    <Pressable style={styles.container} onPress={handlePress}>
       <View style={styles.header}>
         <View>
           <Text style={styles.symbol}>{price.symbol}</Text>
@@ -35,7 +49,7 @@ export const PriceCard: React.FC<PriceCardProps> = ({ price }) => {
           </Text>
         </View>
       </View>
-    </View>
+    </Pressable>
   );
 };
 

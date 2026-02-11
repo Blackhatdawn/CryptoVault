@@ -27,6 +27,10 @@ export default function RootLayout() {
             <Stack.Screen name="price-alert" options={{ headerShown: false }} />
             <Stack.Screen name="qr-scanner" options={{ headerShown: false }} />
             <Stack.Screen name="splash" options={{ headerShown: false }} />
+            <Stack.Screen name="trading" options={{ headerShown: false }} />
+            <Stack.Screen name="price-detail" options={{ headerShown: false }} />
+            <Stack.Screen name="security-settings" options={{ headerShown: false }} />
+            <Stack.Screen name="edit-profile" options={{ headerShown: false }} />
           </Stack>
         </WalletProvider>
       </AuthProvider>

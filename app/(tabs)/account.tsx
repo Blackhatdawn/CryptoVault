@@ -71,21 +71,27 @@ export default function AccountScreen() {
           <View style={styles.menuGroup}>
             <MenuItem
               icon="person-outline"
-              title="Profile"
-              subtitle="Edit your personal information"
-              onPress={() => router.push('/settings')}
+              title="Edit Profile"
+              subtitle="Update your personal information"
+              onPress={() => router.push('/edit-profile')}
             />
             <MenuItem
               icon="security"
               title="Security"
-              subtitle="Password, 2FA, biometric"
+              subtitle="Password, 2FA, biometric settings"
+              onPress={() => router.push('/security-settings')}
+            />
+            <MenuItem
+              icon="settings"
+              title="Settings"
+              subtitle="App preferences and configuration"
               onPress={() => router.push('/settings')}
             />
             <MenuItem
               icon="notifications-outline"
               title="Notifications"
               subtitle="Manage notification preferences"
-              onPress={() => Alert.alert('Coming Soon', 'Notification settings')}
+              onPress={() => router.push('/notifications')}
             />
           </View>
         </View>
