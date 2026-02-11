@@ -23,7 +23,10 @@ export default function RootLayout() {
             <Stack.Screen name="withdraw" options={{ headerShown: false }} />
             <Stack.Screen name="transfer" options={{ headerShown: false }} />
             <Stack.Screen name="settings" options={{ headerShown: false }} />
-            <Stack.Screen name="history" options={{ headerShown: false }} />
+            <Stack.Screen name="notifications" options={{ headerShown: false }} />
+            <Stack.Screen name="price-alert" options={{ headerShown: false }} />
+            <Stack.Screen name="qr-scanner" options={{ headerShown: false }} />
+            <Stack.Screen name="splash" options={{ headerShown: false }} />
           </Stack>
         </WalletProvider>
       </AuthProvider>

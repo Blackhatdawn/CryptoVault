@@ -34,7 +34,7 @@ export default function WalletScreen() {
     }).format(value);
   };
 
-  const topPrices = prices.slice(0, 5);
+  const topPrices = Array.isArray(prices) ? prices.slice(0, 5) : [];
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>

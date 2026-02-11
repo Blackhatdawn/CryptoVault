@@ -1,44 +1,59 @@
 {
   "expo": {
     "name": "CryptoVault",
-    "slug": "cryptovault",
+    "slug": "cryptovault-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "cryptovault",
+    "icon": "./assets/images/onboarding-hero.png",
     "userInterfaceStyle": "dark",
+    "scheme": "cryptovault",
     "splash": {
-      "image": "./assets/images/splash.png",
+      "image": "./assets/images/onboarding-hero.png",
       "resizeMode": "contain",
       "backgroundColor": "#0a0a0a"
     },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.cryptovault.app",
+      "bundleIdentifier": "com.cryptovault.mobile",
       "infoPlist": {
-        "NSFaceIDUsageDescription": "Use Face ID to securely login to CryptoVault"
+        "NSFaceIDUsageDescription": "We use Face ID to secure your wallet and enable quick login",
+        "NSCameraUsageDescription": "We need camera access to scan QR codes for crypto addresses"
       }
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/images/onboarding-hero.png",
         "backgroundColor": "#0a0a0a"
       },
-      "package": "com.cryptovault.app",
+      "package": "com.cryptovault.mobile",
       "permissions": [
         "USE_BIOMETRIC",
-        "USE_FINGERPRINT"
+        "USE_FINGERPRINT",
+        "CAMERA"
       ]
     },
     "web": {
-      "bundler": "metro",
-      "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/onboarding-hero.png",
+      "bundler": "metro"
     },
     "plugins": [
       "expo-router",
       "expo-secure-store",
-      "expo-local-authentication"
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Allow CryptoVault to use Face ID for secure login"
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow CryptoVault to scan QR codes for crypto addresses"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
@@ -48,7 +63,7 @@
         "origin": false
       },
       "eas": {
-        "projectId": "cryptovault-mobile"
+        "projectId": "your-project-id"
       }
     }
   }

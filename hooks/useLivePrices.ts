@@ -55,8 +55,11 @@ export const useLivePrices = (symbols: string[] = ['BTC', 'ETH', 'USDT', 'USDC',
     return getPriceChange(symbol) >= 0;
   };
 
+  // Convert prices map to array for components
+  const pricesArray = Object.values(prices);
+
   return {
-    prices,
+    prices: pricesArray,
     isConnected,
     isLoading,
     getPriceChange,

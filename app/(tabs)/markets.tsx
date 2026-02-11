@@ -11,18 +11,22 @@ export default function MarketsScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'price' | 'change'>('price');
 
-  const filteredPrices = prices
-    .filter(
-      (price) =>
-        price.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        price.symbol.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-    .sort((a, b) => {
-      if (sortBy === 'price') {
-        return b.price_usd - a.price_usd;
-      }
-      return Math.abs(b.change_24h) - Math.abs(a.change_24h);
-    });
+  const filteredPrices = Array.isArray(prices)
+    ? prices
+        .filter(
+          (price) =>
+            price.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            price.symbol.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+        .sort((a, b) => {
+          if (sortBy === 'price') {
+            return b.price_usd - a.price_usd;
+          }
+          const changeA = parseFloat(price.changePercent24Hr || '0');
+          const changeB = parseFloat(b.changePercent24Hr || '0');
+          return Math.abs(changeB) - Math.abs(changeA);
+        })
+    : [];
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
