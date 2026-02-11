@@ -1,75 +1,259 @@
-# Welcome to OnSpace AI
+# CryptoVault Mobile App
 
-Onspace AI empowers anyone to turn ideas into powerful AI applications in minutes—no coding required. Our free, no-code platform enables effortless creation of custom AI apps; simply describe your vision and our agentic AI handles the rest. The onspace-app, built with React Native and Expo, demonstrates this capability—integrating popular third-party libraries to deliver seamless cross-platform performance across iOS, Android, and Web environments.
+A secure cryptocurrency wallet and trading mobile application built with React Native and Expo.
 
-## Getting Started
+## Features
 
-### 1. Install Dependencies
+- 🔐 **Biometric Authentication** - Face ID / Touch ID support
+- 💰 **Wallet Management** - Multi-currency balance tracking
+- 📊 **Live Price Feed** - Real-time WebSocket cryptocurrency prices
+- 💸 **Deposits** - Create crypto deposits via NOWPayments
+- 🔄 **P2P Transfers** - Instant transfers between users
+- 📤 **Withdrawals** - Secure withdrawal requests with admin approval
+- 📈 **Markets** - Browse and search cryptocurrency prices
+- 📜 **Transaction History** - Complete transaction tracking
+- 🔔 **Notifications** - Real-time alerts and updates
+- 📱 **Price Alerts** - Set custom price notifications
 
+## Tech Stack
+
+- **React Native** with Expo
+- **TypeScript** for type safety
+- **Expo Router** for navigation
+- **Context API** for state management
+- **WebSocket** for real-time updates
+- **Expo Local Authentication** for biometric support
+- **Expo Camera** for QR code scanning
+
+## Prerequisites
+
+- Node.js 18+
+- npm or yarn
+- Expo CLI
+- iOS Simulator (Mac) or Android Emulator
+
+## Installation
+
+1. **Clone the repository**
+```bash
+git clone <repository-url>
+cd cryptovault-mobile
+```
+
+2. **Install dependencies**
 ```bash
 npm install
 # or
 yarn install
 ```
 
-### 2. Start the Project
-
-- Start the development server (choose your platform):
-
+3. **Set up environment variables**
 ```bash
-npm run start         # Start Expo development server
-npm run android       # Launch Android emulator
-npm run ios           # Launch iOS simulator
-npm run web           # Start the web version
+cp .env.example .env
 ```
 
-- Reset the project (clear cache, etc.):
-
-```bash
-npm run reset-project
+Edit `.env` and configure your backend URL:
+```env
+EXPO_PUBLIC_API_URL=https://cryptovault-api.onrender.com
+EXPO_PUBLIC_WS_URL=wss://cryptovault-api.onrender.com
 ```
 
-### 3. Lint the Code
+## Running the App
 
+### Development Mode
+
+**Start the development server:**
 ```bash
-npm run lint
+npm start
+# or
+yarn start
 ```
 
-## Main Dependencies
+**Run on iOS Simulator:**
+```bash
+npm run ios
+# or
+yarn ios
+```
 
-- React Native: 0.79.4
-- React: 19.0.0
-- Expo: ~53.0.12
-- Expo Router: ~5.1.0
-- Supabase: ^2.50.0
-- Other commonly used libraries:  
-  - @expo/vector-icons  
-  - react-native-paper  
-  - react-native-calendars  
-  - lottie-react-native  
-  - react-native-webview  
-  - and more
+**Run on Android Emulator:**
+```bash
+npm run android
+# or
+yarn android
+```
 
-For a full list of dependencies, see [package.json](./package.json).
+**Run on Web:**
+```bash
+npm run web
+# or
+yarn web
+```
 
-## Development Tools
+### Production Build
 
-- TypeScript: ~5.8.3
-- ESLint: ^9.25.0
-- @babel/core: ^7.25.2
+**Build for iOS:**
+```bash
+eas build --platform ios
+```
+
+**Build for Android:**
+```bash
+eas build --platform android
+```
+
+## Backend Connection
+
+This app connects to the CryptoVault backend API at:
+- **Production:** `https://cryptovault-api.onrender.com`
+- **Local Development:** `http://localhost:8001`
+
+Switch between environments by updating the `.env` file.
+
+## Project Structure
+
+```
+├── app/                    # Expo Router screens
+│   ├── (tabs)/            # Bottom tab navigation
+│   │   ├── index.tsx      # Wallet screen
+│   │   ├── markets.tsx    # Markets screen
+│   │   ├── history.tsx    # Transaction history
+│   │   └── account.tsx    # Account/Profile
+│   ├── auth.tsx           # Login/Signup
+│   ├── deposit.tsx        # Deposit creation
+│   ├── withdraw.tsx       # Withdrawal request
+│   ├── transfer.tsx       # P2P transfer
+│   ├── settings.tsx       # Settings
+│   ├── notifications.tsx  # Notifications
+│   ├── price-alert.tsx    # Price alerts
+│   ├── qr-scanner.tsx     # QR code scanner
+│   ├── onboarding.tsx     # Onboarding flow
+│   └── splash.tsx         # Splash screen
+├── components/            # Reusable components
+│   ├── ui/               # Base UI components
+│   ├── PriceCard.tsx     # Price display card
+│   ├── TransactionItem.tsx # Transaction list item
+│   └── QuickActions.tsx  # Quick action buttons
+├── contexts/             # React contexts
+│   ├── AuthContext.tsx   # Auth state
+│   └── WalletContext.tsx # Wallet state
+├── hooks/                # Custom hooks
+│   ├── useAuth.ts        # Auth hook
+│   ├── useWallet.ts      # Wallet hook
+│   ├── usePrices.ts      # Price data hook
+│   └── useLivePrices.ts  # WebSocket prices
+├── services/             # API services
+│   ├── api.ts            # HTTP client
+│   └── websocket.ts      # WebSocket client
+├── constants/            # App constants
+│   ├── theme.ts          # Design system
+│   └── config.ts         # App configuration
+└── types/                # TypeScript types
+    └── index.ts
+```
+
+## Environment Variables
+
+All environment variables must be prefixed with `EXPO_PUBLIC_` to be accessible in the app.
+
+**Required:**
+- `EXPO_PUBLIC_API_URL` - Backend API URL
+- `EXPO_PUBLIC_WS_URL` - WebSocket URL
+
+**Optional:**
+- `EXPO_PUBLIC_SENTRY_DSN` - Error tracking
+- `EXPO_PUBLIC_FEATURE_*` - Feature flags
+
+See `.env.example` for all available options.
+
+## Design System
+
+The app uses a dark crypto-themed design:
+- **Colors:** Gold (#FFD700) primary, dark backgrounds
+- **Typography:** Responsive font sizes with proper line heights
+- **Spacing:** 8pt grid system
+- **Components:** Reusable UI components with consistent styling
+
+## Authentication
+
+1. **Email/Password** - Initial signup and login
+2. **Biometric** - Quick login with Face ID/Touch ID
+3. **JWT Tokens** - Secure token-based authentication
+4. **Auto-refresh** - Automatic token refresh for sessions
+
+## Features
+
+### Wallet Management
+- View total balance (USD)
+- See available vs locked funds
+- Quick actions (Deposit, Withdraw, Transfer)
+- Live price feed on main screen
+
+### Deposits
+- Select cryptocurrency (BTC, ETH, USDT, USDC)
+- Generate payment address via NOWPayments
+- Display QR code and copy address
+- Real-time status updates
+
+### Withdrawals
+- Select cryptocurrency
+- Enter withdrawal address
+- Calculate network fees
+- Biometric confirmation required
+- Admin approval workflow
+
+### Transfers
+- Send to other users by email
+- Instant and free
+- Transaction history tracking
+
+### Markets
+- Live cryptocurrency prices
+- Search and filter
+- Sort by price or 24h change
+- Real-time WebSocket updates
+
+### Price Alerts
+- Set custom price targets
+- Choose condition (above/below)
+- Receive notifications when triggered
+
+## Troubleshooting
+
+**Can't connect to backend:**
+- Check `.env` file has correct API URL
+- Verify backend is running
+- Check network connection
+
+**Biometric not working:**
+- Ensure device has Face ID/Touch ID enabled
+- Grant app permissions
+- Check Settings > Biometric Login toggle
+
+**WebSocket disconnected:**
+- Check internet connection
+- Backend may be restarting
+- App auto-reconnects with exponential backoff
 
 ## Contributing
 
-1. Fork this repository
-2. Create a new branch (`git checkout -b main`)
-3. Commit your changes (`git commit -am 'Add new feature'`)
-4. Push to the branch (`git push origin feature/your-feature`)
-5. Open a Pull Request
+1. Fork the repository
+2. Create feature branch: `git checkout -b feature/my-feature`
+3. Commit changes: `git commit -am 'Add feature'`
+4. Push to branch: `git push origin feature/my-feature`
+5. Submit pull request
 
 ## License
 
-This project is private ("private": true). For collaboration inquiries, please contact the author.
+MIT License - see LICENSE file for details
+
+## Support
+
+- **Email:** support@cryptovault.financial
+- **Documentation:** See backend docs at cryptovault-api.onrender.com/docs
 
 ---
 
-Feel free to add project screenshots, API documentation, feature descriptions, or any other information as needed.
+**Version:** 2.0.0  
+**Last Updated:** 2026-02-11  
+**Status:** Production Ready
