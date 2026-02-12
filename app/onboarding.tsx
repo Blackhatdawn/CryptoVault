@@ -1,144 +1,186 @@
-import React, { useRef, useState } from 'react';
-import { View, Text, StyleSheet, Dimensions, Pressable, FlatList } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { View, Text, StyleSheet, Pressable, Dimensions, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Image } from 'expo-image';
 import { MaterialIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Image } from 'expo-image';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors, Typography, Spacing, BorderRadius } from '@/constants/theme';
-import { Button } from '@/components/ui/Button';
 
 const { width } = Dimensions.get('window');
 
-const ONBOARDING_SLIDES = [
+const SLIDES = [
   {
-    id: '1',
+    id: 1,
     title: 'Secure Crypto Wallet',
-    description: 'Your assets are protected with bank-level security and biometric authentication',
+    description: 'Bank-grade security with biometric authentication and encrypted storage for your digital assets',
     image: require('@/assets/images/onboarding-hero.png'),
-    icon: 'security',
+    icon: 'verified-user',
+    gradient: ['#8B5CF6', '#6366F1'],
   },
   {
-    id: '2',
-    title: 'Real-Time Prices',
-    description: 'Stay updated with live cryptocurrency prices and market trends',
+    id: 2,
+    title: 'Real-Time Trading',
+    description: 'Trade cryptocurrencies instantly with live market data and zero-delay execution',
+    image: require('@/assets/images/onboarding-hero.png'),
     icon: 'trending-up',
+    gradient: ['#F59E0B', '#FBBF24'],
   },
   {
-    id: '3',
+    id: 3,
     title: 'Instant Transfers',
-    description: 'Send and receive crypto instantly with zero fees between users',
-    icon: 'send',
+    description: 'Send and receive crypto with lightning-fast P2P transfers - free and instant',
+    image: require('@/assets/images/onboarding-hero.png'),
+    icon: 'flash-on',
+    gradient: ['#10B981', '#34D399'],
   },
 ];
 
 export default function OnboardingScreen() {
   const router = useRouter();
-  const flatListRef = useRef<FlatList>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const scrollX = useRef(new Animated.Value(0)).current;
 
-  const handleScroll = (event: any) => {
-    const index = Math.round(event.nativeEvent.contentOffset.x / width);
-    setCurrentIndex(index);
-  };
-
-  const handleNext = () => {
-    if (currentIndex < ONBOARDING_SLIDES.length - 1) {
-      flatListRef.current?.scrollToIndex({ index: currentIndex + 1, animated: true });
+  const handleContinue = async () => {
+    if (currentIndex < SLIDES.length - 1) {
+      setCurrentIndex(currentIndex + 1);
     } else {
-      handleGetStarted();
+      await AsyncStorage.setItem('@cryptovault/onboarding_completed', 'true');
+      router.replace('/auth');
     }
   };
 
-  const handleSkip = () => {
-    handleGetStarted();
-  };
-
-  const handleGetStarted = async () => {
-    await AsyncStorage.setItem('onboarding_completed', 'true');
+  const handleSkip = async () => {
+    await AsyncStorage.setItem('@cryptovault/onboarding_completed', 'true');
     router.replace('/auth');
   };
 
-  const renderSlide = ({ item }: { item: typeof ONBOARDING_SLIDES[0] }) => (
-    <View style={styles.slide}>
-      <View style={styles.imageContainer}>
-        {item.image ? (
-          <Image
-            source={item.image}
-            style={styles.image}
-            contentFit="contain"
-            transition={200}
-          />
-        ) : (
-          <View style={styles.iconPlaceholder}>
-            <MaterialIcons name={item.icon as any} size={120} color={Colors.primary} />
-          </View>
-        )}
-      </View>
-
-      <View style={styles.content}>
-        <Text style={styles.title}>{item.title}</Text>
-        <Text style={styles.description}>{item.description}</Text>
-      </View>
-    </View>
-  );
+  const currentSlide = SLIDES[currentIndex];
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      {/* Skip Button */}
-      {currentIndex < ONBOARDING_SLIDES.length - 1 && (
-        <Pressable style={styles.skipButton} onPress={handleSkip}>
-          <Text style={styles.skipText}>Skip</Text>
-        </Pressable>
-      )}
+    <LinearGradient
+      colors={[Colors.background, Colors.surface, Colors.background]}
+      style={styles.container}
+    >
+      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+        {/* Skip Button */}
+        <View style={styles.header}>
+          <View style={{ width: 80 }} />
+          <Pressable onPress={handleSkip} style={styles.skipButton}>
+            <Text style={styles.skipText}>Skip</Text>
+          </Pressable>
+        </View>
 
-      {/* Slides */}
-      <FlatList
-        ref={flatListRef}
-        data={ONBOARDING_SLIDES}
-        renderItem={renderSlide}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
-        keyExtractor={(item) => item.id}
-      />
+        {/* Content */}
+        <View style={styles.content}>
+          {/* Icon with Gradient Background */}
+          <View style={styles.iconContainer}>
+            <LinearGradient
+              colors={currentSlide.gradient as any}
+              style={styles.iconGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              <MaterialIcons name={currentSlide.icon as any} size={80} color="#FFF" />
+            </LinearGradient>
+            
+            {/* Animated glow rings */}
+            <View style={[styles.glowRing, styles.glowRing1]} />
+            <View style={[styles.glowRing, styles.glowRing2]} />
+          </View>
 
-      {/* Pagination Dots */}
-      <View style={styles.pagination}>
-        {ONBOARDING_SLIDES.map((_, index) => (
-          <View
-            key={index}
-            style={[
-              styles.dot,
-              index === currentIndex && styles.dotActive,
-            ]}
-          />
-        ))}
-      </View>
+          {/* Title & Description */}
+          <View style={styles.textContainer}>
+            <Text style={styles.title}>{currentSlide.title}</Text>
+            <Text style={styles.description}>{currentSlide.description}</Text>
+          </View>
 
-      {/* Next/Get Started Button */}
-      <View style={styles.footer}>
-        <Button
-          title={currentIndex === ONBOARDING_SLIDES.length - 1 ? 'Get Started' : 'Next'}
-          onPress={handleNext}
-        />
-      </View>
-    </SafeAreaView>
+          {/* Features List */}
+          <View style={styles.features}>
+            <View style={styles.featureItem}>
+              <View style={styles.checkCircle}>
+                <MaterialIcons name="check" size={16} color={Colors.background} />
+              </View>
+              <Text style={styles.featureText}>
+                {currentIndex === 0 && 'Face ID & Fingerprint'}
+                {currentIndex === 1 && 'Live Price Updates'}
+                {currentIndex === 2 && 'No Transaction Fees'}
+              </Text>
+            </View>
+            <View style={styles.featureItem}>
+              <View style={styles.checkCircle}>
+                <MaterialIcons name="check" size={16} color={Colors.background} />
+              </View>
+              <Text style={styles.featureText}>
+                {currentIndex === 0 && 'Multi-Currency Support'}
+                {currentIndex === 1 && 'Advanced Order Types'}
+                {currentIndex === 2 && 'Instant Settlement'}
+              </Text>
+            </View>
+            <View style={styles.featureItem}>
+              <View style={styles.checkCircle}>
+                <MaterialIcons name="check" size={16} color={Colors.background} />
+              </View>
+              <Text style={styles.featureText}>
+                {currentIndex === 0 && '24/7 Account Monitoring'}
+                {currentIndex === 1 && 'Real-Time Charts'}
+                {currentIndex === 2 && 'QR Code Scanning'}
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Footer */}
+        <View style={styles.footer}>
+          {/* Pagination Dots */}
+          <View style={styles.pagination}>
+            {SLIDES.map((_, index) => (
+              <View
+                key={index}
+                style={[
+                  styles.dot,
+                  index === currentIndex && styles.dotActive,
+                ]}
+              />
+            ))}
+          </View>
+
+          {/* Continue Button */}
+          <Pressable onPress={handleContinue} style={styles.button}>
+            <LinearGradient
+              colors={currentSlide.gradient as any}
+              style={styles.buttonGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+            >
+              <Text style={styles.buttonText}>
+                {currentIndex < SLIDES.length - 1 ? 'Continue' : 'Get Started'}
+              </Text>
+              <MaterialIcons name="arrow-forward" size={20} color="#FFF" />
+            </LinearGradient>
+          </Pressable>
+        </View>
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+  },
+  safeArea: {
+    flex: 1,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
   },
   skipButton: {
-    position: 'absolute',
-    top: 60,
-    right: Spacing.md,
-    zIndex: 10,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
   },
@@ -147,39 +189,54 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     fontWeight: '600',
   },
-  slide: {
-    width,
+  content: {
     flex: 1,
-    alignItems: 'center',
     justifyContent: 'center',
+    alignItems: 'center',
     paddingHorizontal: Spacing.xl,
   },
-  imageContainer: {
-    flex: 1,
-    width: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: Spacing.xxl,
-  },
-  image: {
-    width: width * 0.8,
-    height: width * 1.2,
-  },
-  iconPlaceholder: {
+  iconContainer: {
     width: 200,
     height: 200,
-    borderRadius: 100,
-    backgroundColor: `${Colors.primary}15`,
-    alignItems: 'center',
     justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: Spacing.xxxl,
+    position: 'relative',
   },
-  content: {
-    width: '100%',
-    paddingBottom: Spacing.xxl,
+  iconGradient: {
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4,
+    shadowRadius: 24,
+    elevation: 12,
+  },
+  glowRing: {
+    position: 'absolute',
+    borderRadius: 9999,
+    borderWidth: 2,
+    borderColor: Colors.primaryGlow,
+  },
+  glowRing1: {
+    width: 180,
+    height: 180,
+    opacity: 0.3,
+  },
+  glowRing2: {
+    width: 200,
+    height: 200,
+    opacity: 0.15,
+  },
+  textContainer: {
+    alignItems: 'center',
+    marginBottom: Spacing.xl,
   },
   title: {
-    fontSize: 28,
-    fontWeight: '700',
+    ...Typography.h1,
     color: Colors.text,
     textAlign: 'center',
     marginBottom: Spacing.md,
@@ -189,26 +246,64 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     textAlign: 'center',
     lineHeight: 24,
+    maxWidth: 320,
+  },
+  features: {
+    width: '100%',
+    gap: Spacing.md,
+  },
+  featureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
+  checkCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: Colors.success,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  featureText: {
+    ...Typography.body,
+    color: Colors.text,
+    flex: 1,
+  },
+  footer: {
+    paddingHorizontal: Spacing.xl,
+    paddingBottom: Spacing.lg,
   },
   pagination: {
     flexDirection: 'row',
     justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: Spacing.lg,
+    gap: Spacing.sm,
+    marginBottom: Spacing.xl,
   },
   dot: {
     width: 8,
     height: 8,
     borderRadius: 4,
     backgroundColor: Colors.border,
-    marginHorizontal: 4,
   },
   dotActive: {
     width: 24,
     backgroundColor: Colors.primary,
   },
-  footer: {
-    paddingHorizontal: Spacing.xl,
-    paddingBottom: Spacing.lg,
+  button: {
+    borderRadius: BorderRadius.xl,
+    overflow: 'hidden',
+  },
+  buttonGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing.lg,
+    gap: Spacing.sm,
+  },
+  buttonText: {
+    ...Typography.bodyBold,
+    color: '#FFF',
+    fontSize: 18,
   },
 });

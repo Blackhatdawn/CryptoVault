@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Colors, BorderRadius, Typography, Spacing, Shadows } from '@/constants/theme';
 import type { CryptoPrice } from '@/types';
 
@@ -9,9 +10,9 @@ interface PriceCardProps {
   price: CryptoPrice;
 }
 
-export const PriceCard: React.FC<PriceCardProps> = ({ price }) => {
+export function PriceCard({ price }: PriceCardProps) {
   const router = useRouter();
-  const isPositive = price.change_24h >= 0;
+  const isPositive = parseFloat(price.changePercent24Hr || '0') >= 0;
 
   const handlePress = () => {
     router.push({
@@ -19,81 +20,145 @@ export const PriceCard: React.FC<PriceCardProps> = ({ price }) => {
       params: {
         symbol: price.symbol,
         name: price.name,
-        price: price.price_usd.toString(),
-        change: price.change_24h.toString(),
+        price: price.priceUsd,
+        change: price.changePercent24Hr,
       },
     });
   };
 
   return (
-    <Pressable style={styles.container} onPress={handlePress}>
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.symbol}>{price.symbol}</Text>
-          <Text style={styles.name}>{price.name}</Text>
-        </View>
-        <MaterialIcons
-          name={isPositive ? 'trending-up' : 'trending-down'}
-          size={24}
-          color={isPositive ? Colors.bullish : Colors.bearish}
+    <Pressable onPress={handlePress} style={styles.container}>
+      <View style={styles.card}>
+        {/* Gradient border effect */}
+        <LinearGradient
+          colors={isPositive 
+            ? ['rgba(16, 185, 129, 0.2)', 'transparent'] 
+            : ['rgba(239, 68, 68, 0.2)', 'transparent']
+          }
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.gradientBorder}
         />
-      </View>
 
-      <View style={styles.priceRow}>
-        <Text style={styles.priceText}>
-          ${price.price_usd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-        </Text>
-        <View style={[styles.changeBadge, { backgroundColor: isPositive ? Colors.successBg : Colors.errorBg }]}>
-          <Text style={[styles.change, { color: isPositive ? Colors.bullish : Colors.bearish }]}>
-            {isPositive ? '+' : ''}{price.change_24h.toFixed(2)}%
-          </Text>
+        <View style={styles.content}>
+          {/* Left: Icon & Info */}
+          <View style={styles.leftSection}>
+            <View style={[
+              styles.iconContainer,
+              { backgroundColor: isPositive ? Colors.successGlow : Colors.errorGlow }
+            ]}>
+              <MaterialIcons 
+                name="currency-bitcoin" 
+                size={28} 
+                color={isPositive ? Colors.success : Colors.error} 
+              />
+            </View>
+            <View style={styles.info}>
+              <Text style={styles.symbol}>{price.symbol}</Text>
+              <Text style={styles.name}>{price.name}</Text>
+            </View>
+          </View>
+
+          {/* Right: Price & Change */}
+          <View style={styles.rightSection}>
+            <Text style={styles.price}>
+              ${parseFloat(price.priceUsd).toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </Text>
+            <View style={[
+              styles.changeBadge,
+              { backgroundColor: isPositive ? Colors.successGlow : Colors.errorGlow }
+            ]}>
+              <MaterialIcons
+                name={isPositive ? 'trending-up' : 'trending-down'}
+                size={14}
+                color={isPositive ? Colors.success : Colors.error}
+              />
+              <Text style={[
+                styles.changeText,
+                { color: isPositive ? Colors.success : Colors.error }
+              ]}>
+                {Math.abs(parseFloat(price.changePercent24Hr || '0')).toFixed(2)}%
+              </Text>
+            </View>
+          </View>
         </View>
       </View>
     </Pressable>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: Colors.surfaceElevated,
-    borderRadius: BorderRadius.md,
-    padding: Spacing.md,
-    marginBottom: Spacing.sm,
-    ...Shadows.sm,
+    marginBottom: Spacing.xs,
   },
-  header: {
+  card: {
+    backgroundColor: Colors.surfaceElevated,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  gradientBorder: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 3,
+  },
+  content: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: Spacing.sm,
+    padding: Spacing.md,
+    paddingLeft: Spacing.lg,
+  },
+  leftSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  iconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: Spacing.md,
+  },
+  info: {
+    flex: 1,
   },
   symbol: {
-    ...Typography.subheading,
+    ...Typography.bodyBold,
     color: Colors.text,
-    fontWeight: '600',
+    marginBottom: 2,
   },
   name: {
     ...Typography.caption,
     color: Colors.textSecondary,
-    marginTop: 2,
   },
-  priceRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  rightSection: {
+    alignItems: 'flex-end',
   },
-  priceText: {
-    ...Typography.heading,
+  price: {
+    ...Typography.bodyBold,
     color: Colors.text,
-    fontWeight: '700',
+    marginBottom: 4,
   },
   changeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: Spacing.sm,
-    paddingVertical: 4,
+    paddingVertical: 2,
     borderRadius: BorderRadius.sm,
+    gap: 2,
   },
-  change: {
+  changeText: {
     ...Typography.caption,
-    fontWeight: '600',
+    fontWeight: '700',
   },
 });
