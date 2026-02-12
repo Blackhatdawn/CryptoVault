@@ -1,39 +1,20 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, Alert, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '@/hooks/useAuth';
+import { useWallet } from '@/hooks/useWallet';
 import { Colors, Typography, Spacing, BorderRadius, Shadows } from '@/constants/theme';
 
-type MenuItemProps = {
-  icon: keyof typeof MaterialIcons.glyphMap;
-  title: string;
-  subtitle?: string;
-  onPress: () => void;
-  danger?: boolean;
-};
-
-const MenuItem: React.FC<MenuItemProps> = ({ icon, title, subtitle, onPress, danger }) => (
-  <Pressable style={styles.menuItem} onPress={onPress}>
-    <View style={[styles.iconContainer, danger && { backgroundColor: `${Colors.error}20` }]}>
-      <MaterialIcons
-        name={icon}
-        size={24}
-        color={danger ? Colors.error : Colors.primary}
-      />
-    </View>
-    <View style={styles.menuContent}>
-      <Text style={[styles.menuTitle, danger && { color: Colors.error }]}>{title}</Text>
-      {subtitle && <Text style={styles.menuSubtitle}>{subtitle}</Text>}
-    </View>
-    <MaterialIcons name="chevron-right" size={24} color={Colors.textMuted} />
-  </Pressable>
-);
+const { width } = Dimensions.get('window');
+const isSmallScreen = width < 375;
 
 export default function AccountScreen() {
   const router = useRouter();
   const { user, logout } = useAuth();
+  const { balance } = useWallet();
 
   const handleLogout = () => {
     Alert.alert(
@@ -53,196 +34,312 @@ export default function AccountScreen() {
     );
   };
 
+  const menuSections = [
+    {
+      title: 'Account',
+      items: [
+        { icon: 'person', label: 'Edit Profile', route: '/edit-profile' },
+        { icon: 'security', label: 'Security Settings', route: '/security-settings' },
+        { icon: 'settings', label: 'App Settings', route: '/settings' },
+      ],
+    },
+    {
+      title: 'Activity',
+      items: [
+        { icon: 'notifications', label: 'Notifications', route: '/notifications' },
+        { icon: 'notifications-active', label: 'Price Alerts', route: '/price-alert' },
+      ],
+    },
+    {
+      title: 'Support',
+      items: [
+        { icon: 'help', label: 'Help Center', action: () => Alert.alert('Coming Soon', 'Help center') },
+        { icon: 'headset-mic', label: 'Contact Support', action: () => Alert.alert('Coming Soon', 'Contact support') },
+        { icon: 'info', label: 'About', action: () => Alert.alert('CryptoVault', 'Version 1.0.0\nBuilt with React Native & Expo') },
+      ],
+    },
+  ];
+
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Profile Header */}
-        <View style={styles.profileCard}>
-          <View style={styles.avatarContainer}>
-            <MaterialIcons name="person" size={48} color={Colors.primary} />
-          </View>
-          <Text style={styles.userName}>{user?.name || 'User'}</Text>
-          <Text style={styles.userEmail}>{user?.email || 'user@example.com'}</Text>
-        </View>
+    <View style={styles.container}>
+      <LinearGradient
+        colors={[Colors.background, Colors.surface]}
+        style={StyleSheet.absoluteFill}
+      />
 
-        {/* Account Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Account</Text>
-          <View style={styles.menuGroup}>
-            <MenuItem
-              icon="person-outline"
-              title="Edit Profile"
-              subtitle="Update your personal information"
-              onPress={() => router.push('/edit-profile')}
-            />
-            <MenuItem
-              icon="security"
-              title="Security"
-              subtitle="Password, 2FA, biometric settings"
-              onPress={() => router.push('/security-settings')}
-            />
-            <MenuItem
-              icon="settings"
-              title="Settings"
-              subtitle="App preferences and configuration"
-              onPress={() => router.push('/settings')}
-            />
-            <MenuItem
-              icon="notifications-outline"
-              title="Notifications"
-              subtitle="Manage notification preferences"
-              onPress={() => router.push('/notifications')}
-            />
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        <ScrollView showsVerticalScrollIndicator={false}>
+          {/* Header */}
+          <View style={styles.header}>
+            <Text style={styles.headerTitle}>Account</Text>
           </View>
-        </View>
 
-        {/* Wallet Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Wallet</Text>
-          <View style={styles.menuGroup}>
-            <MenuItem
-              icon="account-balance-wallet"
-              title="Payment Methods"
-              subtitle="Manage deposit & withdrawal methods"
-              onPress={() => Alert.alert('Coming Soon', 'Payment methods')}
-            />
-            <MenuItem
-              icon="history"
-              title="Transaction History"
-              subtitle="View all your transactions"
-              onPress={() => router.push('/(tabs)/history')}
-            />
-            <MenuItem
-              icon="receipt"
-              title="Statements"
-              subtitle="Download transaction statements"
-              onPress={() => Alert.alert('Coming Soon', 'Statements')}
-            />
-          </View>
-        </View>
+          {/* Profile Card */}
+          <View style={styles.profileSection}>
+            <View style={styles.profileCard}>
+              <LinearGradient
+                colors={['#8B5CF6', '#6366F1']}
+                style={styles.profileGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                {/* Avatar */}
+                <View style={styles.avatarContainer}>
+                  <View style={styles.avatar}>
+                    <Text style={styles.avatarText}>
+                      {user?.name?.charAt(0).toUpperCase() || 'U'}
+                    </Text>
+                  </View>
+                  {user?.kyc_verified && (
+                    <View style={styles.verifiedBadge}>
+                      <MaterialIcons name="verified" size={16} color={Colors.success} />
+                    </View>
+                  )}
+                </View>
 
-        {/* Support Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Support</Text>
-          <View style={styles.menuGroup}>
-            <MenuItem
-              icon="help-outline"
-              title="Help Center"
-              subtitle="FAQs and support articles"
-              onPress={() => Alert.alert('Coming Soon', 'Help center')}
-            />
-            <MenuItem
-              icon="chat-bubble-outline"
-              title="Contact Support"
-              subtitle="Get help from our team"
-              onPress={() => Alert.alert('Coming Soon', 'Contact support')}
-            />
-            <MenuItem
-              icon="info-outline"
-              title="About"
-              subtitle="Version 1.0.0"
-              onPress={() => Alert.alert('CryptoVault', 'Version 1.0.0\nBuilt with React Native & Expo')}
-            />
-          </View>
-        </View>
+                {/* User Info */}
+                <View style={styles.userInfo}>
+                  <Text style={styles.userName}>{user?.name || 'User'}</Text>
+                  <Text style={styles.userEmail}>{user?.email || 'user@example.com'}</Text>
+                </View>
 
-        {/* Logout */}
-        <View style={styles.section}>
-          <View style={styles.menuGroup}>
-            <MenuItem
-              icon="logout"
-              title="Logout"
-              onPress={handleLogout}
-              danger
-            />
+                {/* Balance Summary */}
+                <View style={styles.balanceSummary}>
+                  <View style={styles.balanceItem}>
+                    <Text style={styles.balanceLabel}>Total Balance</Text>
+                    <Text style={styles.balanceValue}>
+                      ${balance?.total_usd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
+                    </Text>
+                  </View>
+                </View>
+              </LinearGradient>
+            </View>
           </View>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+
+          {/* Menu Sections */}
+          {menuSections.map((section, sectionIndex) => (
+            <View key={sectionIndex} style={styles.section}>
+              <Text style={styles.sectionTitle}>{section.title}</Text>
+              <View style={styles.menuGroup}>
+                {section.items.map((item, itemIndex) => (
+                  <Pressable
+                    key={itemIndex}
+                    style={styles.menuItem}
+                    onPress={() => {
+                      if (item.route) {
+                        router.push(item.route as any);
+                      } else if (item.action) {
+                        item.action();
+                      }
+                    }}
+                  >
+                    <View style={styles.menuItemLeft}>
+                      <View style={styles.menuIcon}>
+                        <MaterialIcons name={item.icon as any} size={22} color={Colors.primary} />
+                      </View>
+                      <Text style={styles.menuLabel}>{item.label}</Text>
+                    </View>
+                    <MaterialIcons name="chevron-right" size={20} color={Colors.textMuted} />
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+          ))}
+
+          {/* Logout Button */}
+          <View style={styles.logoutSection}>
+            <Pressable style={styles.logoutButton} onPress={handleLogout}>
+              <MaterialIcons name="logout" size={20} color={Colors.error} />
+              <Text style={styles.logoutText}>Logout</Text>
+            </Pressable>
+          </View>
+
+          {/* Footer */}
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>CryptoVault v1.0.0</Text>
+            <Text style={styles.footerSubtext}>Secure Digital Wallet</Text>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
-  scrollContent: {
-    paddingBottom: Spacing.xxl,
+  safeArea: {
+    flex: 1,
+  },
+  header: {
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.sm,
+  },
+  headerTitle: {
+    ...Typography.h2,
+    color: Colors.text,
+    fontSize: isSmallScreen ? 24 : 28,
+  },
+  profileSection: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
   },
   profileCard: {
+    borderRadius: BorderRadius.xl,
+    overflow: 'hidden',
+    ...Shadows.lg,
+  },
+  profileGradient: {
+    padding: isSmallScreen ? Spacing.lg : Spacing.xl,
     alignItems: 'center',
-    backgroundColor: Colors.surfaceElevated,
-    marginHorizontal: Spacing.md,
-    marginTop: Spacing.md,
-    marginBottom: Spacing.lg,
-    padding: Spacing.xl,
-    borderRadius: BorderRadius.lg,
-    ...Shadows.md,
   },
   avatarContainer: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: `${Colors.primary}20`,
+    position: 'relative',
+    marginBottom: Spacing.md,
+  },
+  avatar: {
+    width: isSmallScreen ? 80 : 96,
+    height: isSmallScreen ? 80 : 96,
+    borderRadius: isSmallScreen ? 40 : 48,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 3,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  avatarText: {
+    fontSize: isSmallScreen ? 36 : 42,
+    fontWeight: '700',
+    color: '#FFF',
+  },
+  verifiedBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#FFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  userInfo: {
+    alignItems: 'center',
     marginBottom: Spacing.md,
   },
   userName: {
-    ...Typography.title,
-    color: Colors.text,
-    marginBottom: Spacing.xs,
+    fontSize: isSmallScreen ? 20 : 24,
+    fontWeight: '700',
+    color: '#FFF',
+    marginBottom: 4,
   },
   userEmail: {
-    ...Typography.body,
-    color: Colors.textSecondary,
+    fontSize: isSmallScreen ? 13 : 14,
+    color: 'rgba(255, 255, 255, 0.8)',
+  },
+  balanceSummary: {
+    width: '100%',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+  },
+  balanceItem: {
+    alignItems: 'center',
+  },
+  balanceLabel: {
+    fontSize: isSmallScreen ? 12 : 13,
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginBottom: 4,
+  },
+  balanceValue: {
+    fontSize: isSmallScreen ? 24 : 28,
+    fontWeight: '700',
+    color: '#FFF',
   },
   section: {
-    marginBottom: Spacing.lg,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
   },
   sectionTitle: {
-    ...Typography.subheading,
-    color: Colors.textSecondary,
-    fontWeight: '600',
-    marginLeft: Spacing.md,
-    marginBottom: Spacing.sm,
+    ...Typography.caption,
+    color: Colors.textMuted,
+    fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+    marginBottom: Spacing.xs,
+    fontSize: isSmallScreen ? 11 : 12,
   },
   menuGroup: {
     backgroundColor: Colors.surfaceElevated,
-    marginHorizontal: Spacing.md,
-    borderRadius: BorderRadius.md,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    borderColor: Colors.border,
     overflow: 'hidden',
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: Spacing.md,
+    justifyContent: 'space-between',
+    padding: isSmallScreen ? Spacing.sm : Spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
   },
-  iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: BorderRadius.md,
-    backgroundColor: `${Colors.primary}20`,
+  menuItemLeft: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: Spacing.md,
-  },
-  menuContent: {
     flex: 1,
   },
-  menuTitle: {
+  menuIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.primaryGlow,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: Spacing.sm,
+  },
+  menuLabel: {
     ...Typography.body,
     color: Colors.text,
-    fontWeight: '600',
-    marginBottom: 2,
+    fontWeight: '500',
+    fontSize: isSmallScreen ? 14 : 16,
   },
-  menuSubtitle: {
+  logoutSection: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.errorGlow,
+    borderRadius: BorderRadius.md,
+    padding: isSmallScreen ? Spacing.sm : Spacing.md,
+    borderWidth: 1,
+    borderColor: Colors.error,
+    gap: Spacing.sm,
+  },
+  logoutText: {
+    ...Typography.body,
+    color: Colors.error,
+    fontWeight: '600',
+    fontSize: isSmallScreen ? 14 : 16,
+  },
+  footer: {
+    alignItems: 'center',
+    paddingVertical: Spacing.xl,
+  },
+  footerText: {
     ...Typography.caption,
-    color: Colors.textSecondary,
+    color: Colors.textMuted,
+    fontSize: isSmallScreen ? 11 : 12,
+  },
+  footerSubtext: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+    fontSize: isSmallScreen ? 10 : 11,
+    marginTop: 2,
   },
 });
