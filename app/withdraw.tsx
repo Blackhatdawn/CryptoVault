@@ -1,19 +1,24 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, Alert, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { useWallet } from '@/hooks/useWallet';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Colors, Typography, Spacing, BorderRadius } from '@/constants/theme';
+import { Colors, Typography, Spacing, BorderRadius, Shadows } from '@/constants/theme';
+
+const { width } = Dimensions.get('window');
+const isSmallScreen = width < 375;
 
 const CRYPTO_OPTIONS = [
-  { symbol: 'BTC', name: 'Bitcoin', fee: 0.0001, network: 'Bitcoin' },
-  { symbol: 'ETH', name: 'Ethereum', fee: 0.001, network: 'Ethereum' },
-  { symbol: 'USDT', name: 'Tether (ERC-20)', fee: 5, network: 'Ethereum' },
-  { symbol: 'USDC', name: 'USD Coin', fee: 3, network: 'Ethereum' },
+  { symbol: 'BTC', name: 'Bitcoin', fee: 0.0001, network: 'Bitcoin', gradient: ['#F7931A', '#FF6B35'], icon: '₿' },
+  { symbol: 'ETH', name: 'Ethereum', fee: 0.001, network: 'Ethereum', gradient: ['#627EEA', '#8B5CF6'], icon: 'Ξ' },
+  { symbol: 'USDT', name: 'Tether', fee: 5, network: 'Ethereum', gradient: ['#26A17B', '#10B981'], icon: '₮' },
+  { symbol: 'USDC', name: 'USD Coin', fee: 3, network: 'Ethereum', gradient: ['#2775CA', '#6366F1'], icon: '$' },
 ];
 
 export default function WithdrawScreen() {
@@ -48,13 +53,11 @@ export default function WithdrawScreen() {
       return;
     }
 
-    // Validate address format (basic check)
     if (selectedCrypto === 'BTC' && !formData.address.match(/^[13][a-km-zA-HJ-NP-Z1-9]{25,34}$|^bc1[a-z0-9]{39,59}$/)) {
       Alert.alert('Error', 'Invalid Bitcoin address format');
       return;
     }
 
-    // Biometric authentication for withdrawal
     try {
       const hasHardware = await LocalAuthentication.hasHardwareAsync();
       const isEnrolled = await LocalAuthentication.isEnrolledAsync();
@@ -110,142 +113,209 @@ export default function WithdrawScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Pressable style={styles.backButton} onPress={() => router.back()}>
-          <MaterialIcons name="arrow-back" size={24} color={Colors.text} />
-        </Pressable>
-        <Text style={styles.title}>Withdraw Funds</Text>
-        <View style={styles.placeholder} />
-      </View>
+    <View style={styles.container}>
+      <LinearGradient
+        colors={Colors.gradientBackground as any}
+        style={StyleSheet.absoluteFill}
+      />
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Available Balance */}
-        <View style={styles.balanceCard}>
-          <Text style={styles.balanceLabel}>Available Balance</Text>
-          <Text style={styles.balanceAmount}>
-            ${availableBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </Text>
-        </View>
-
-        {/* Select Crypto */}
-        <View style={styles.section}>
-          <Text style={styles.label}>Select Cryptocurrency</Text>
-          <View style={styles.cryptoGrid}>
-            {CRYPTO_OPTIONS.map((crypto) => (
-              <Pressable
-                key={crypto.symbol}
-                style={[
-                  styles.cryptoButton,
-                  selectedCrypto === crypto.symbol && styles.cryptoButtonActive,
-                ]}
-                onPress={() => setSelectedCrypto(crypto.symbol)}
-              >
-                <Text style={styles.cryptoSymbol}>{crypto.symbol}</Text>
-                <Text style={styles.cryptoNetwork}>{crypto.network}</Text>
-                <Text style={styles.cryptoFee}>Fee: {crypto.fee} {crypto.symbol}</Text>
-              </Pressable>
-            ))}
-          </View>
-        </View>
-
-        {/* Withdrawal Address */}
-        <View style={styles.section}>
-          <Input
-            label={`${selectedCrypto} Address`}
-            value={formData.address}
-            onChangeText={(address) => setFormData({ ...formData, address })}
-            placeholder={selectedCrypto === 'BTC' ? 'bc1q...' : '0x...'}
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
-          <View style={styles.warningBox}>
-            <MaterialIcons name="warning" size={16} color={Colors.warning} />
-            <Text style={styles.warningText}>
-              Only send to {selectedCrypto} {selectedCryptoData?.network} addresses. Wrong network = lost funds!
-            </Text>
-          </View>
-        </View>
-
-        {/* Amount */}
-        <View style={styles.section}>
-          <Input
-            label={`Amount (${selectedCrypto})`}
-            value={formData.amount}
-            onChangeText={(amount) => setFormData({ ...formData, amount })}
-            placeholder="0.00000000"
-            keyboardType="decimal-pad"
-          />
-          <Pressable
-            style={styles.maxButton}
-            onPress={() => {
-              const maxAmount = Math.max(0, availableBalance - (typeof networkFee === 'number' ? networkFee : 0));
-              setFormData({ ...formData, amount: maxAmount.toFixed(8) });
-            }}
-          >
-            <Text style={styles.maxButtonText}>Max</Text>
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Pressable style={styles.backButton} onPress={() => router.back()}>
+            <MaterialIcons name="arrow-back" size={24} color={Colors.text} />
           </Pressable>
+          <Text style={styles.title}>Withdraw Funds</Text>
+          <View style={styles.placeholder} />
         </View>
 
-        {/* Withdrawal Summary */}
-        <View style={styles.summaryCard}>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Withdrawal Amount</Text>
-            <Text style={styles.summaryValue}>
-              {withdrawAmount.toFixed(8)} {selectedCrypto}
-            </Text>
-          </View>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Network Fee</Text>
-            <Text style={styles.summaryValue}>
-              {networkFee} {selectedCrypto}
-            </Text>
-          </View>
-          <View style={styles.summaryDivider} />
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryTotal}>Total Deducted</Text>
-            <Text style={[
-              styles.summaryTotal,
-              { color: totalAmount > availableBalance ? Colors.error : Colors.text }
-            ]}>
-              {totalAmount.toFixed(8)} {selectedCrypto}
-            </Text>
-          </View>
-        </View>
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          {/* Available Balance */}
+          <Animated.View entering={FadeInDown.delay(100).springify()}>
+            <View style={styles.balanceCard}>
+              <LinearGradient
+                colors={['rgba(139, 92, 246, 0.1)', 'rgba(99, 102, 241, 0.05)']}
+                style={styles.balanceGradient}
+              >
+                <Text style={styles.balanceLabel}>Available Balance</Text>
+                <Text style={styles.balanceAmount}>
+                  ${availableBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </Text>
+              </LinearGradient>
+            </View>
+          </Animated.View>
 
-        {/* Security Notice */}
-        <View style={styles.infoBox}>
-          <MaterialIcons name="security" size={20} color={Colors.info} />
-          <Text style={styles.infoText}>
-            Withdrawals require admin approval for security. Typical processing time: 1-24 hours.
-          </Text>
-        </View>
+          {/* Select Crypto */}
+          <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.section}>
+            <Text style={styles.label}>Select Cryptocurrency</Text>
+            <View style={styles.cryptoGrid}>
+              {CRYPTO_OPTIONS.map((crypto, index) => (
+                <Pressable
+                  key={crypto.symbol}
+                  style={styles.cryptoButtonWrapper}
+                  onPress={() => setSelectedCrypto(crypto.symbol)}
+                >
+                  <LinearGradient
+                    colors={selectedCrypto === crypto.symbol ? crypto.gradient as any : ['transparent', 'transparent']}
+                    style={styles.cryptoGradient}
+                  >
+                    <View style={[
+                      styles.cryptoButton,
+                      selectedCrypto === crypto.symbol && styles.cryptoButtonActive,
+                    ]}>
+                      <View style={styles.cryptoIconContainer}>
+                        <Text style={styles.cryptoIcon}>{crypto.icon}</Text>
+                      </View>
+                      <Text style={styles.cryptoSymbol}>{crypto.symbol}</Text>
+                      <Text style={styles.cryptoNetwork}>{crypto.network}</Text>
+                      <View style={styles.feeContainer}>
+                        <MaterialIcons name="flash-on" size={12} color={Colors.warning} />
+                        <Text style={styles.cryptoFee}>{crypto.fee} {crypto.symbol}</Text>
+                      </View>
+                    </View>
+                  </LinearGradient>
+                </Pressable>
+              ))}
+            </View>
+          </Animated.View>
 
-        {/* Withdraw Button */}
-        <Button
-          title="Request Withdrawal"
-          onPress={handleWithdraw}
-          loading={loading}
-          disabled={!formData.address || !formData.amount || withdrawAmount <= 0 || totalAmount > availableBalance}
-          style={styles.submitButton}
-        />
-      </ScrollView>
-    </SafeAreaView>
+          {/* Withdrawal Address */}
+          <Animated.View entering={FadeInDown.delay(300).springify()} style={styles.section}>
+            <View style={styles.inputHeader}>
+              <Input
+                label={`${selectedCrypto} Address`}
+                value={formData.address}
+                onChangeText={(address) => setFormData({ ...formData, address })}
+                placeholder={selectedCrypto === 'BTC' ? 'bc1q...' : '0x...'}
+                autoCapitalize="none"
+                autoCorrect={false}
+                leftIcon="vpn-key"
+              />
+              <Pressable
+                style={styles.qrButton}
+                onPress={() => router.push('/qr-scanner')}
+              >
+                <LinearGradient
+                  colors={['#8B5CF6', '#6366F1']}
+                  style={styles.qrGradient}
+                >
+                  <MaterialIcons name="qr-code-scanner" size={20} color="#FFF" />
+                </LinearGradient>
+              </Pressable>
+            </View>
+            <View style={styles.warningBox}>
+              <View style={styles.warningIcon}>
+                <MaterialIcons name="warning" size={16} color={Colors.warning} />
+              </View>
+              <Text style={styles.warningText}>
+                Only send to {selectedCrypto} {selectedCryptoData?.network} addresses. Wrong network = lost funds!
+              </Text>
+            </View>
+          </Animated.View>
+
+          {/* Amount */}
+          <Animated.View entering={FadeInDown.delay(400).springify()} style={styles.section}>
+            <Input
+              label={`Amount (${selectedCrypto})`}
+              value={formData.amount}
+              onChangeText={(amount) => setFormData({ ...formData, amount })}
+              placeholder="0.00000000"
+              keyboardType="decimal-pad"
+              leftIcon="account-balance-wallet"
+            />
+            <Pressable
+              style={styles.maxButton}
+              onPress={() => {
+                const maxAmount = Math.max(0, availableBalance - (typeof networkFee === 'number' ? networkFee : 0));
+                setFormData({ ...formData, amount: maxAmount.toFixed(8) });
+              }}
+            >
+              <LinearGradient
+                colors={['#8B5CF6', '#6366F1']}
+                style={styles.maxGradient}
+              >
+                <Text style={styles.maxButtonText}>MAX</Text>
+              </LinearGradient>
+            </Pressable>
+          </Animated.View>
+
+          {/* Withdrawal Summary */}
+          <Animated.View entering={FadeInDown.delay(500).springify()}>
+            <View style={styles.summaryCard}>
+              <LinearGradient
+                colors={['rgba(139, 92, 246, 0.05)', 'transparent']}
+                style={styles.summaryGradient}
+              >
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryLabel}>Withdrawal Amount</Text>
+                  <Text style={styles.summaryValue}>
+                    {withdrawAmount.toFixed(8)} {selectedCrypto}
+                  </Text>
+                </View>
+                <View style={styles.summaryRow}>
+                  <View style={styles.summaryLabelRow}>
+                    <Text style={styles.summaryLabel}>Network Fee</Text>
+                    <MaterialIcons name="flash-on" size={14} color={Colors.warning} />
+                  </View>
+                  <Text style={styles.summaryValue}>
+                    {networkFee} {selectedCrypto}
+                  </Text>
+                </View>
+                <View style={styles.summaryDivider} />
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryTotal}>Total Deducted</Text>
+                  <Text style={[
+                    styles.summaryTotal,
+                    { color: totalAmount > availableBalance ? Colors.error : Colors.primary }
+                  ]}>
+                    {totalAmount.toFixed(8)} {selectedCrypto}
+                  </Text>
+                </View>
+              </LinearGradient>
+            </View>
+          </Animated.View>
+
+          {/* Security Notice */}
+          <Animated.View entering={FadeIn.delay(600)}>
+            <View style={styles.infoBox}>
+              <View style={styles.infoIconContainer}>
+                <MaterialIcons name="security" size={20} color={Colors.info} />
+              </View>
+              <Text style={styles.infoText}>
+                Withdrawals require admin approval for security. Typical processing time: 1-24 hours.
+              </Text>
+            </View>
+          </Animated.View>
+
+          {/* Withdraw Button */}
+          <Animated.View entering={FadeInDown.delay(700).springify()}>
+            <Button
+              title="Request Withdrawal"
+              onPress={handleWithdraw}
+              loading={loading}
+              disabled={!formData.address || !formData.amount || withdrawAmount <= 0 || totalAmount > availableBalance}
+              style={styles.submitButton}
+            />
+          </Animated.View>
+        </ScrollView>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+  },
+  safeArea: {
+    flex: 1,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
   },
@@ -261,28 +331,33 @@ const styles = StyleSheet.create({
   title: {
     ...Typography.heading,
     color: Colors.text,
+    fontSize: isSmallScreen ? 18 : 20,
   },
   scrollContent: {
-    padding: Spacing.md,
-    paddingBottom: Spacing.xxl,
+    padding: Spacing.lg,
+    paddingBottom: Spacing.xxxl,
   },
   balanceCard: {
-    backgroundColor: Colors.surfaceElevated,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.lg,
+    borderRadius: BorderRadius.xl,
+    overflow: 'hidden',
     marginBottom: Spacing.xl,
+    ...Shadows.md,
+  },
+  balanceGradient: {
+    padding: Spacing.xl,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: Colors.borderLight,
+    borderColor: Colors.border,
   },
   balanceLabel: {
     ...Typography.caption,
     color: Colors.textSecondary,
     marginBottom: Spacing.xs,
+    fontSize: isSmallScreen ? 12 : 14,
   },
   balanceAmount: {
-    fontSize: 28,
-    fontWeight: '700',
+    fontSize: isSmallScreen ? 32 : 36,
+    fontWeight: '800',
     color: Colors.primary,
   },
   section: {
@@ -290,79 +365,137 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   label: {
-    ...Typography.body,
+    ...Typography.bodyBold,
     color: Colors.text,
-    fontWeight: '600',
     marginBottom: Spacing.md,
+    fontSize: isSmallScreen ? 14 : 16,
   },
   cryptoGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.sm,
   },
-  cryptoButton: {
+  cryptoButtonWrapper: {
     flex: 1,
-    minWidth: '47%',
+    minWidth: isSmallScreen ? '47%' : '48%',
+    borderRadius: BorderRadius.lg,
+    overflow: 'hidden',
+  },
+  cryptoGradient: {
+    padding: 2,
+    borderRadius: BorderRadius.lg,
+  },
+  cryptoButton: {
     backgroundColor: Colors.surfaceElevated,
-    borderRadius: BorderRadius.md,
-    padding: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    padding: isSmallScreen ? Spacing.sm : Spacing.md,
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: 'transparent',
+    minHeight: isSmallScreen ? 120 : 130,
+    justifyContent: 'center',
   },
   cryptoButtonActive: {
-    borderColor: Colors.primary,
-    backgroundColor: `${Colors.primary}10`,
+    backgroundColor: 'rgba(139, 92, 246, 0.1)',
+  },
+  cryptoIconContainer: {
+    width: isSmallScreen ? 48 : 56,
+    height: isSmallScreen ? 48 : 56,
+    borderRadius: isSmallScreen ? 24 : 28,
+    backgroundColor: Colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.sm,
+  },
+  cryptoIcon: {
+    fontSize: isSmallScreen ? 28 : 32,
   },
   cryptoSymbol: {
-    ...Typography.subheading,
+    ...Typography.bodyBold,
     color: Colors.text,
-    fontWeight: '700',
-    marginBottom: 4,
+    marginBottom: 2,
+    fontSize: isSmallScreen ? 14 : 16,
   },
   cryptoNetwork: {
     ...Typography.caption,
     color: Colors.textSecondary,
     marginBottom: 4,
+    fontSize: isSmallScreen ? 11 : 12,
+  },
+  feeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
   },
   cryptoFee: {
     ...Typography.small,
     color: Colors.textMuted,
+    fontSize: 10,
+  },
+  inputHeader: {
+    position: 'relative',
+  },
+  qrButton: {
+    position: 'absolute',
+    right: Spacing.md,
+    top: 40,
+    borderRadius: BorderRadius.sm,
+    overflow: 'hidden',
+  },
+  qrGradient: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   warningBox: {
     flexDirection: 'row',
-    backgroundColor: `${Colors.warning}15`,
-    borderRadius: BorderRadius.sm,
+    backgroundColor: Colors.warningGlow,
+    borderRadius: BorderRadius.md,
     padding: Spacing.sm,
-    marginTop: Spacing.xs,
+    marginTop: Spacing.sm,
     borderLeftWidth: 3,
     borderLeftColor: Colors.warning,
+    gap: Spacing.xs,
+  },
+  warningIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(245, 158, 11, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   warningText: {
     ...Typography.caption,
     color: Colors.warning,
-    marginLeft: Spacing.xs,
     flex: 1,
+    lineHeight: 18,
+    fontSize: isSmallScreen ? 12 : 13,
   },
   maxButton: {
     position: 'absolute',
     right: Spacing.md,
     top: 40,
-    backgroundColor: Colors.primary,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
     borderRadius: BorderRadius.sm,
+    overflow: 'hidden',
+  },
+  maxGradient: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
   },
   maxButtonText: {
     ...Typography.caption,
-    color: Colors.background,
+    color: '#FFF',
     fontWeight: '700',
   },
   summaryCard: {
-    backgroundColor: Colors.surfaceElevated,
-    borderRadius: BorderRadius.md,
-    padding: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    overflow: 'hidden',
     marginBottom: Spacing.lg,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  summaryGradient: {
+    padding: Spacing.md,
   },
   summaryRow: {
     flexDirection: 'row',
@@ -370,15 +503,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: Spacing.sm,
   },
+  summaryLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
   summaryLabel: {
     ...Typography.body,
     color: Colors.textSecondary,
+    fontSize: isSmallScreen ? 13 : 14,
   },
   summaryValue: {
     ...Typography.body,
     color: Colors.text,
     fontWeight: '600',
     fontFamily: 'monospace',
+    fontSize: isSmallScreen ? 13 : 14,
   },
   summaryDivider: {
     height: 1,
@@ -389,19 +529,32 @@ const styles = StyleSheet.create({
     ...Typography.subheading,
     fontWeight: '700',
     fontFamily: 'monospace',
+    fontSize: isSmallScreen ? 15 : 17,
   },
   infoBox: {
     flexDirection: 'row',
-    backgroundColor: `${Colors.info}20`,
+    backgroundColor: Colors.surfaceElevated,
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     marginBottom: Spacing.lg,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    gap: Spacing.sm,
+  },
+  infoIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: Colors.infoGlow,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   infoText: {
     ...Typography.caption,
-    color: Colors.info,
-    marginLeft: Spacing.sm,
+    color: Colors.textSecondary,
     flex: 1,
+    lineHeight: 18,
+    fontSize: isSmallScreen ? 12 : 13,
   },
   submitButton: {
     marginTop: Spacing.md,
