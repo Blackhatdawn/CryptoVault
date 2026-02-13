@@ -1,5 +1,6 @@
 import React from 'react';
 import { Pressable, Text, StyleSheet, ActivityIndicator, ViewStyle, TextStyle } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Colors, BorderRadius, Typography, Spacing } from '@/constants/theme';
 
 interface ButtonProps {
@@ -23,11 +24,19 @@ export const Button: React.FC<ButtonProps> = ({
   style,
   textStyle,
 }) => {
+  const isDisabled = disabled || loading;
+
+  const getGradientColors = () => {
+    if (variant === 'primary') return ['#8B5CF6', '#6366F1'];
+    if (variant === 'danger') return ['#EF4444', '#F87171'];
+    return ['transparent', 'transparent'];
+  };
+
   const buttonStyle = [
     styles.base,
-    styles[variant],
     styles[`size_${size}`],
-    disabled && styles.disabled,
+    variant === 'outline' && styles.outline,
+    variant === 'secondary' && styles.secondary,
     style,
   ];
 
@@ -35,69 +44,100 @@ export const Button: React.FC<ButtonProps> = ({
     styles.text,
     styles[`text_${variant}`],
     styles[`textSize_${size}`],
-    disabled && styles.textDisabled,
+    isDisabled && styles.textDisabled,
     textStyle,
   ];
+
+  const content = (
+    <>
+      {loading ? (
+        <ActivityIndicator color={variant === 'outline' ? Colors.primary : '#FFF'} />
+      ) : (
+        <Text style={labelStyle}>{title}</Text>
+      )}
+    </>
+  );
+
+  if (variant === 'primary' || variant === 'danger') {
+    return (
+      <Pressable
+        onPress={onPress}
+        disabled={isDisabled}
+        style={({ pressed }) => [
+          buttonStyle,
+          pressed && !isDisabled && styles.pressed,
+          isDisabled && styles.disabled,
+        ]}
+      >
+        <LinearGradient
+          colors={getGradientColors() as any}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.gradient}
+        >
+          {content}
+        </LinearGradient>
+      </Pressable>
+    );
+  }
 
   return (
     <Pressable
       style={({ pressed }) => [
         ...buttonStyle,
-        pressed && !disabled && styles.pressed,
+        pressed && !isDisabled && styles.pressed,
+        isDisabled && styles.disabled,
       ]}
       onPress={onPress}
-      disabled={disabled || loading}
+      disabled={isDisabled}
     >
-      {loading ? (
-        <ActivityIndicator color={variant === 'outline' ? Colors.primary : Colors.background} />
-      ) : (
-        <Text style={labelStyle}>{title}</Text>
-      )}
+      {content}
     </Pressable>
   );
 };
 
 const styles = StyleSheet.create({
   base: {
+    borderRadius: BorderRadius.md,
+    overflow: 'hidden',
+  },
+  gradient: {
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: BorderRadius.md,
-    flexDirection: 'row',
+    width: '100%',
+    height: '100%',
   },
   
   // Variants
-  primary: {
-    backgroundColor: Colors.primary,
-  },
   secondary: {
     backgroundColor: Colors.surfaceElevated,
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
   outline: {
     backgroundColor: 'transparent',
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: Colors.primary,
-  },
-  danger: {
-    backgroundColor: Colors.error,
   },
 
   // Sizes
   size_small: {
-    height: 36,
+    height: 40,
     paddingHorizontal: Spacing.md,
   },
   size_medium: {
-    height: 48,
+    height: 52,
     paddingHorizontal: Spacing.lg,
   },
   size_large: {
-    height: 56,
+    height: 60,
     paddingHorizontal: Spacing.xl,
   },
 
   // States
   pressed: {
-    opacity: 0.7,
+    opacity: 0.8,
+    transform: [{ scale: 0.98 }],
   },
   disabled: {
     opacity: 0.5,
@@ -105,10 +145,11 @@ const styles = StyleSheet.create({
 
   // Text
   text: {
-    fontWeight: '600',
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
   text_primary: {
-    color: Colors.background,
+    color: '#FFFFFF',
   },
   text_secondary: {
     color: Colors.text,
@@ -117,7 +158,7 @@ const styles = StyleSheet.create({
     color: Colors.primary,
   },
   text_danger: {
-    color: Colors.text,
+    color: '#FFFFFF',
   },
   textSize_small: {
     fontSize: 14,
@@ -129,6 +170,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   textDisabled: {
-    color: Colors.textMuted,
+    opacity: 0.6,
   },
 });

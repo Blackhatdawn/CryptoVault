@@ -1,8 +1,12 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Colors, BorderRadius, Typography, Spacing } from '@/constants/theme';
 import type { Transaction } from '@/types';
+
+const { width } = Dimensions.get('window');
+const isSmallScreen = width < 375;
 
 interface TransactionItemProps {
   transaction: Transaction;
@@ -26,18 +30,18 @@ export const TransactionItem: React.FC<TransactionItemProps> = ({ transaction })
     }
   };
 
-  const getColor = () => {
+  const getGradient = () => {
     switch (transaction.type) {
       case 'deposit':
-        return Colors.bullish;
+        return ['#10B981', '#34D399'];
       case 'withdrawal':
-        return Colors.bearish;
+        return ['#EF4444', '#F87171'];
       case 'transfer':
       case 'transfer_sent':
       case 'transfer_received':
-        return Colors.info;
+        return ['#3B82F6', '#60A5FA'];
       default:
-        return Colors.textSecondary;
+        return ['#71717A', '#A1A1AA'];
     }
   };
 
@@ -74,20 +78,40 @@ export const TransactionItem: React.FC<TransactionItemProps> = ({ transaction })
 
   return (
     <View style={styles.container}>
-      <View style={[styles.iconContainer, { backgroundColor: `${getColor()}20` }]}>
-        <MaterialIcons name={getIcon() as any} size={24} color={getColor()} />
+      {/* Gradient Border */}
+      <LinearGradient
+        colors={getGradient() as any}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={styles.gradientBorder}
+      />
+
+      {/* Icon */}
+      <View style={styles.iconWrapper}>
+        <LinearGradient
+          colors={getGradient() as any}
+          style={styles.iconGradient}
+        >
+          <MaterialIcons name={getIcon() as any} size={22} color="#FFF" />
+        </LinearGradient>
       </View>
 
+      {/* Details */}
       <View style={styles.details}>
         <Text style={styles.type}>{formatType(transaction.type)}</Text>
-        <Text style={styles.date}>{formatDate(transaction.created_at)}</Text>
+        <View style={styles.dateRow}>
+          <MaterialIcons name="schedule" size={12} color={Colors.textMuted} />
+          <Text style={styles.date}>{formatDate(transaction.created_at)}</Text>
+        </View>
       </View>
 
+      {/* Amount & Status */}
       <View style={styles.amountContainer}>
-        <Text style={[styles.amount, { color: getColor() }]}>
+        <Text style={styles.amount}>
           {transaction.type === 'deposit' ? '+' : '-'}${Math.abs(transaction.amount).toFixed(2)}
         </Text>
         <View style={[styles.statusBadge, { backgroundColor: `${getStatusColor()}20` }]}>
+          <View style={[styles.statusDot, { backgroundColor: getStatusColor() }]} />
           <Text style={[styles.status, { color: getStatusColor() }]}>
             {transaction.status}
           </Text>
@@ -102,47 +126,79 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Colors.surfaceElevated,
-    borderRadius: BorderRadius.md,
-    padding: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    padding: isSmallScreen ? Spacing.sm : Spacing.md,
     marginBottom: Spacing.sm,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    position: 'relative',
+    overflow: 'hidden',
   },
-  iconContainer: {
-    width: 48,
-    height: 48,
+  gradientBorder: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 3,
+  },
+  iconWrapper: {
+    marginLeft: Spacing.sm,
+    marginRight: Spacing.md,
     borderRadius: BorderRadius.md,
+    overflow: 'hidden',
+  },
+  iconGradient: {
+    width: isSmallScreen ? 44 : 48,
+    height: isSmallScreen ? 44 : 48,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: Spacing.md,
   },
   details: {
     flex: 1,
   },
   type: {
-    ...Typography.body,
+    ...Typography.bodyBold,
     color: Colors.text,
-    fontWeight: '600',
     marginBottom: 4,
+    fontSize: isSmallScreen ? 14 : 16,
+  },
+  dateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   date: {
     ...Typography.caption,
     color: Colors.textSecondary,
+    fontSize: isSmallScreen ? 11 : 12,
   },
   amountContainer: {
     alignItems: 'flex-end',
+    gap: 4,
   },
   amount: {
-    ...Typography.subheading,
+    ...Typography.bodyBold,
+    fontSize: isSmallScreen ? 15 : 17,
     fontWeight: '700',
-    marginBottom: 4,
+    color: Colors.text,
   },
   statusBadge: {
-    paddingHorizontal: Spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.xs,
     paddingVertical: 2,
-    borderRadius: BorderRadius.sm,
+    borderRadius: BorderRadius.xs,
+    gap: 3,
+  },
+  statusDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
   },
   status: {
-    ...Typography.small,
-    fontWeight: '600',
+    ...Typography.caption,
+    fontWeight: '700',
     textTransform: 'capitalize',
+    fontSize: isSmallScreen ? 10 : 11,
   },
 });
