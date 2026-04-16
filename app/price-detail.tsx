@@ -1,329 +1,232 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, Dimensions } from 'react-native';
+import {
+  View, Text, StyleSheet, ScrollView,
+  Pressable, Dimensions,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { LineChart } from 'react-native-chart-kit';
-import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeIn, ZoomIn } from 'react-native-reanimated';
 import { Colors, Typography, Spacing, BorderRadius, Shadows } from '@/constants/theme';
 import { Button } from '@/components/ui/Button';
 import { api } from '@/services/api';
 
 const { width } = Dimensions.get('window');
-const isSmallScreen = width < 375;
+const isSmall = width < 375;
 
 type TimeFrame = '1H' | '24H' | '7D' | '1M' | '1Y';
+
+const TIME_FRAMES: TimeFrame[] = ['1H', '24H', '7D', '1M', '1Y'];
+
+const STATS = [
+  { icon: 'trending-up', label: 'Market Cap', value: '$1.2T',   color: Colors.primary },
+  { icon: 'show-chart',  label: '24h Volume', value: '$45.2B',  color: Colors.info    },
+  { icon: 'arrow-upward',label: '24h High',   value: 'dynamic', color: Colors.success },
+  { icon: 'arrow-downward',label:'24h Low',   value: 'dynamic', color: Colors.error   },
+];
 
 export default function PriceDetailScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  
   const [timeFrame, setTimeFrame] = useState<TimeFrame>('24H');
-  const [priceHistory, setPriceHistory] = useState<number[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [history, setHistory]   = useState<number[]>([]);
+  const [loading, setLoading]   = useState(true);
 
-  const symbol = (params.symbol as string) || 'BTC';
-  const name = (params.name as string) || 'Bitcoin';
-  const currentPrice = parseFloat(params.price as string) || 0;
-  const change24h = parseFloat(params.change as string) || 0;
+  const symbol     = (params.symbol  as string) || 'BTC';
+  const name       = (params.name    as string) || 'Bitcoin';
+  const price      = parseFloat(params.price  as string) || 0;
+  const change     = parseFloat(params.change as string) || 0;
+  const isPositive = change >= 0;
 
-  useEffect(() => {
-    fetchPriceHistory();
-  }, [timeFrame]);
+  useEffect(() => { fetchHistory(); }, [timeFrame]);
 
-  const fetchPriceHistory = async () => {
-    setIsLoading(true);
+  const fetchHistory = async () => {
+    setLoading(true);
     try {
       const data = await api.getPriceHistory(symbol, timeFrame);
-      setPriceHistory(data);
-    } catch (error) {
-      console.error('Failed to fetch price history:', error);
-      setPriceHistory(generateMockData());
-    } finally {
-      setIsLoading(false);
-    }
+      setHistory(data);
+    } catch {
+      setHistory(mockHistory());
+    } finally { setLoading(false); }
   };
 
-  const generateMockData = () => {
-    const points = timeFrame === '1H' ? 12 : timeFrame === '24H' ? 24 : 30;
-    const data = [];
-    let price = currentPrice;
-    for (let i = 0; i < points; i++) {
-      const volatility = timeFrame === '1H' ? 0.01 : timeFrame === '24H' ? 0.02 : 0.05;
-      price = price * (1 + (Math.random() - 0.5) * volatility);
-      data.push(price);
-    }
-    return data;
+  const mockHistory = () => {
+    const pts = timeFrame === '1H' ? 12 : timeFrame === '24H' ? 24 : 30;
+    let p = price;
+    return Array.from({ length: pts }, () => {
+      const v = timeFrame === '1H' ? 0.01 : timeFrame === '24H' ? 0.02 : 0.06;
+      p = p * (1 + (Math.random() - 0.5) * v);
+      return p;
+    });
   };
 
   const chartData = {
     labels: [],
-    datasets: [
-      {
-        data: priceHistory.length > 0 ? priceHistory : [currentPrice],
-        color: () => change24h >= 0 ? Colors.success : Colors.error,
-        strokeWidth: 3,
-      },
-    ],
+    datasets: [{
+      data: history.length > 0 ? history : [price],
+      color: () => isPositive ? Colors.success : Colors.error,
+      strokeWidth: 2.5,
+    }],
   };
 
-  const timeFrames: { value: TimeFrame; label: string }[] = [
-    { value: '1H', label: '1H' },
-    { value: '24H', label: '24H' },
-    { value: '7D', label: '7D' },
-    { value: '1M', label: '1M' },
-    { value: '1Y', label: '1Y' },
-  ];
-
-  const isPositive = change24h >= 0;
-  const minPrice = Math.min(...priceHistory);
-  const maxPrice = Math.max(...priceHistory);
+  const hi = history.length ? Math.max(...history) : price;
+  const lo = history.length ? Math.min(...history) : price;
 
   return (
-    <View style={styles.container}>
-      <LinearGradient
-        colors={[Colors.background, Colors.surface]}
-        style={StyleSheet.absoluteFill}
-      />
-
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <View style={styles.root}>
+      <LinearGradient colors={[Colors.background, Colors.surface]} style={StyleSheet.absoluteFill} />
+      <SafeAreaView style={styles.safe} edges={['top']}>
         <ScrollView showsVerticalScrollIndicator={false}>
-          {/* Header */}
-          <Animated.View entering={FadeIn}>
-            <View style={styles.header}>
-              <Pressable onPress={() => router.back()} style={styles.backButton}>
-                <MaterialIcons name="arrow-back" size={24} color={Colors.text} />
-              </Pressable>
-              <View style={styles.headerInfo}>
-                <Text style={styles.headerTitle}>{name}</Text>
-                <Text style={styles.headerSymbol}>{symbol}</Text>
-              </View>
-              <Pressable style={styles.favoriteButton}>
-                <MaterialIcons name="star-border" size={24} color={Colors.primary} />
-              </Pressable>
-            </View>
-          </Animated.View>
 
-          {/* Current Price */}
-          <Animated.View entering={FadeInDown.delay(100).springify()}>
-            <View style={styles.priceContainer}>
-              <Text style={styles.currentPrice}>
-                ${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </Text>
-              <View style={styles.changeContainer}>
-                <LinearGradient
-                  colors={isPositive 
-                    ? ['rgba(16, 185, 129, 0.15)', 'rgba(16, 185, 129, 0.05)']
-                    : ['rgba(239, 68, 68, 0.15)', 'rgba(239, 68, 68, 0.05)']
-                  }
-                  style={styles.changeGradient}
-                >
-                  <MaterialIcons
-                    name={isPositive ? 'trending-up' : 'trending-down'}
-                    size={18}
-                    color={isPositive ? Colors.success : Colors.error}
-                  />
-                  <Text style={[styles.changeText, { color: isPositive ? Colors.success : Colors.error }]}>
-                    {Math.abs(change24h).toFixed(2)}%
-                  </Text>
-                </LinearGradient>
+          {/* ─── Header ──────────────────────────────────────────────── */}
+          <Animated.View entering={FadeIn.duration(300)} style={styles.header}>
+            <Pressable onPress={() => router.back()} style={styles.backBtn}>
+              <MaterialIcons name="arrow-back" size={24} color={Colors.text} />
+            </Pressable>
+            <View style={styles.headerCenter}>
+              <View style={styles.symbolIcon}>
+                <Text style={styles.symbolEmoji}>
+                  {symbol === 'BTC' ? '₿' : symbol === 'ETH' ? 'Ξ' : symbol.charAt(0)}
+                </Text>
+              </View>
+              <View>
+                <Text style={styles.headerName}>{name}</Text>
+                <Text style={styles.headerSym}>{symbol}/USD</Text>
               </View>
             </View>
+            <Pressable style={styles.favBtn}>
+              <MaterialIcons name="star-border" size={24} color={Colors.accent} />
+            </Pressable>
           </Animated.View>
 
-          {/* Chart */}
-          <Animated.View entering={FadeInDown.delay(200).springify()}>
-            <View style={styles.chartContainer}>
-              <View style={styles.chartCard}>
-                <LinearGradient
-                  colors={isPositive
-                    ? ['rgba(16, 185, 129, 0.05)', 'transparent']
-                    : ['rgba(239, 68, 68, 0.05)', 'transparent']
-                  }
-                  style={styles.chartGradient}
-                >
-                  {!isLoading && priceHistory.length > 0 && (
-                    <LineChart
-                      data={chartData}
-                      width={width - Spacing.lg * 2}
-                      height={isSmallScreen ? 200 : 240}
-                      chartConfig={{
-                        backgroundColor: 'transparent',
-                        backgroundGradientFrom: 'transparent',
-                        backgroundGradientTo: 'transparent',
-                        decimalPlaces: 2,
-                        color: () => isPositive ? Colors.success : Colors.error,
-                        labelColor: () => Colors.textMuted,
-                        style: {
-                          borderRadius: BorderRadius.lg,
-                        },
-                        propsForDots: {
-                          r: '0',
-                        },
-                        propsForBackgroundLines: {
-                          strokeDasharray: '0',
-                          stroke: Colors.border,
-                          strokeWidth: 1,
-                        },
-                      }}
-                      bezier
-                      withDots={false}
-                      withInnerLines={true}
-                      withOuterLines={false}
-                      withVerticalLabels={false}
-                      withHorizontalLabels={true}
-                      style={styles.chart}
-                    />
-                  )}
-                </LinearGradient>
-              </View>
-            </View>
-          </Animated.View>
-
-          {/* Time Frame Selector */}
-          <Animated.View entering={FadeInDown.delay(300).springify()}>
-            <View style={styles.timeFrameContainer}>
-              {timeFrames.map((tf, index) => (
-                <Pressable
-                  key={tf.value}
-                  style={styles.timeFrameButtonWrapper}
-                  onPress={() => setTimeFrame(tf.value)}
-                >
-                  <LinearGradient
-                    colors={timeFrame === tf.value 
-                      ? ['#8B5CF6', '#6366F1'] 
-                      : ['transparent', 'transparent']
-                    }
-                    style={styles.timeFrameGradient}
-                  >
-                    <Text style={[
-                      styles.timeFrameText,
-                      timeFrame === tf.value && styles.timeFrameTextActive,
-                    ]}>
-                      {tf.label}
-                    </Text>
-                  </LinearGradient>
-                </Pressable>
-              ))}
-            </View>
-          </Animated.View>
-
-          {/* Stats Grid */}
-          <Animated.View entering={FadeInDown.delay(400).springify()}>
-            <View style={styles.statsGrid}>
-              <View style={styles.statCard}>
-                <LinearGradient
-                  colors={['rgba(139, 92, 246, 0.05)', 'transparent']}
-                  style={styles.statGradient}
-                >
-                  <View style={styles.statIcon}>
-                    <MaterialIcons name="trending-up" size={20} color={Colors.primary} />
-                  </View>
-                  <Text style={styles.statLabel}>Market Cap</Text>
-                  <Text style={styles.statValue}>$1.2T</Text>
-                </LinearGradient>
-              </View>
-              
-              <View style={styles.statCard}>
-                <LinearGradient
-                  colors={['rgba(139, 92, 246, 0.05)', 'transparent']}
-                  style={styles.statGradient}
-                >
-                  <View style={styles.statIcon}>
-                    <MaterialIcons name="show-chart" size={20} color={Colors.primary} />
-                  </View>
-                  <Text style={styles.statLabel}>24h Volume</Text>
-                  <Text style={styles.statValue}>$45.2B</Text>
-                </LinearGradient>
-              </View>
-              
-              <View style={styles.statCard}>
-                <LinearGradient
-                  colors={['rgba(16, 185, 129, 0.05)', 'transparent']}
-                  style={styles.statGradient}
-                >
-                  <View style={[styles.statIcon, { backgroundColor: Colors.successGlow }]}>
-                    <MaterialIcons name="arrow-upward" size={20} color={Colors.success} />
-                  </View>
-                  <Text style={styles.statLabel}>24h High</Text>
-                  <Text style={styles.statValue}>
-                    ${maxPrice.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                  </Text>
-                </LinearGradient>
-              </View>
-              
-              <View style={styles.statCard}>
-                <LinearGradient
-                  colors={['rgba(239, 68, 68, 0.05)', 'transparent']}
-                  style={styles.statGradient}
-                >
-                  <View style={[styles.statIcon, { backgroundColor: Colors.errorGlow }]}>
-                    <MaterialIcons name="arrow-downward" size={20} color={Colors.error} />
-                  </View>
-                  <Text style={styles.statLabel}>24h Low</Text>
-                  <Text style={styles.statValue}>
-                    ${minPrice.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                  </Text>
-                </LinearGradient>
-              </View>
-            </View>
-          </Animated.View>
-
-          {/* Action Buttons */}
-          <Animated.View entering={FadeInDown.delay(500).springify()}>
-            <View style={styles.actionsContainer}>
-              <View style={{ flex: 1 }}>
-                <Button
-                  title="Buy"
-                  onPress={() =>
-                    router.push({
-                      pathname: '/trading',
-                      params: { symbol, price: currentPrice.toString() },
-                    })
-                  }
-                  variant="primary"
-                />
-              </View>
-              <View style={{ width: Spacing.md }} />
-              <View style={{ flex: 1 }}>
-                <Button
-                  title="Sell"
-                  onPress={() =>
-                    router.push({
-                      pathname: '/trading',
-                      params: { symbol, price: currentPrice.toString() },
-                    })
-                  }
-                  variant="danger"
-                />
-              </View>
-            </View>
-          </Animated.View>
-
-          {/* Set Alert Button */}
-          <Animated.View entering={FadeIn.delay(600)}>
-            <Pressable
-              style={styles.alertButton}
-              onPress={() =>
-                router.push({
-                  pathname: '/price-alert',
-                  params: { symbol, currentPrice: currentPrice.toString() },
-                })
-              }
-            >
+          {/* ─── Price Display ────────────────────────────────────────── */}
+          <Animated.View entering={FadeInDown.delay(80).springify()} style={styles.priceSection}>
+            <Text style={styles.priceValue}>
+              ${price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </Text>
+            <View style={styles.changePill}>
               <LinearGradient
-                colors={['rgba(139, 92, 246, 0.1)', 'transparent']}
-                style={styles.alertGradient}
+                colors={isPositive ? ['rgba(16,185,129,0.2)','rgba(16,185,129,0.08)'] : ['rgba(239,68,68,0.2)','rgba(239,68,68,0.08)']}
+                style={styles.changePillGrad}
               >
+                <MaterialIcons
+                  name={isPositive ? 'trending-up' : 'trending-down'}
+                  size={18} color={isPositive ? Colors.success : Colors.error}
+                />
+                <Text style={[styles.changePct, { color: isPositive ? Colors.success : Colors.error }]}>
+                  {isPositive ? '+' : ''}{change.toFixed(2)}%
+                </Text>
+                <Text style={styles.changePeriod}>24h</Text>
+              </LinearGradient>
+            </View>
+          </Animated.View>
+
+          {/* ─── Chart ───────────────────────────────────────────────── */}
+          <Animated.View entering={FadeInDown.delay(150).springify()} style={styles.chartSection}>
+            <View style={styles.chartCard}>
+              <LinearGradient
+                colors={isPositive ? ['rgba(16,185,129,0.06)','transparent'] : ['rgba(239,68,68,0.06)','transparent']}
+                style={styles.chartGrad}
+              >
+                {!loading && history.length > 0 && (
+                  <LineChart
+                    data={chartData}
+                    width={width - Spacing.lg * 2 - 2}
+                    height={isSmall ? 190 : 230}
+                    chartConfig={{
+                      backgroundColor: 'transparent',
+                      backgroundGradientFrom: 'transparent',
+                      backgroundGradientTo: 'transparent',
+                      decimalPlaces: 0,
+                      color: () => isPositive ? Colors.success : Colors.error,
+                      labelColor: () => Colors.textMuted,
+                      propsForDots: { r: '0' },
+                      propsForBackgroundLines: { stroke: Colors.border, strokeWidth: 1, strokeDasharray: '4,4' },
+                    }}
+                    bezier
+                    withDots={false}
+                    withInnerLines
+                    withOuterLines={false}
+                    withVerticalLabels={false}
+                    withHorizontalLabels
+                    style={{ borderRadius: BorderRadius.lg }}
+                  />
+                )}
+                {loading && (
+                  <View style={[styles.chartPlaceholder, { height: isSmall ? 190 : 230 }]}>
+                    <MaterialIcons name="show-chart" size={40} color={Colors.border} />
+                    <Text style={styles.chartPlaceholderTxt}>Loading chart...</Text>
+                  </View>
+                )}
+              </LinearGradient>
+            </View>
+          </Animated.View>
+
+          {/* ─── Timeframe Selector ───────────────────────────────────── */}
+          <Animated.View entering={FadeInDown.delay(210).springify()} style={styles.tfRow}>
+            {TIME_FRAMES.map(tf => (
+              <Pressable key={tf} onPress={() => setTimeFrame(tf)} style={styles.tfItem}>
+                <LinearGradient
+                  colors={timeFrame === tf ? ['#7C3AED','#4F46E5'] : ['transparent','transparent']}
+                  style={styles.tfGrad}
+                >
+                  <Text style={[styles.tfText, timeFrame === tf && styles.tfTextActive]}>{tf}</Text>
+                </LinearGradient>
+              </Pressable>
+            ))}
+          </Animated.View>
+
+          {/* ─── Stats Grid ───────────────────────────────────────────── */}
+          <Animated.View entering={FadeInDown.delay(280).springify()} style={styles.statsGrid}>
+            {STATS.map((s, i) => (
+              <View key={i} style={styles.statCard}>
+                <LinearGradient colors={[`${s.color}12`,'transparent']} style={styles.statGrad}>
+                  <View style={[styles.statIcon, { backgroundColor: `${s.color}22` }]}>
+                    <MaterialIcons name={s.icon as any} size={18} color={s.color} />
+                  </View>
+                  <Text style={styles.statLabel}>{s.label}</Text>
+                  <Text style={[styles.statValue, { color: s.color }]}>
+                    {s.value === 'dynamic'
+                      ? (s.label === '24h High'
+                        ? `$${hi.toLocaleString(undefined,{maximumFractionDigits:2})}`
+                        : `$${lo.toLocaleString(undefined,{maximumFractionDigits:2})}`)
+                      : s.value}
+                  </Text>
+                </LinearGradient>
+              </View>
+            ))}
+          </Animated.View>
+
+          {/* ─── Action Buttons ───────────────────────────────────────── */}
+          <Animated.View entering={FadeInDown.delay(350).springify()} style={styles.actions}>
+            <View style={{ flex: 1 }}>
+              <Button title="Buy" onPress={() => router.push({ pathname: '/trading', params: { symbol, price: price.toString() } })} variant="primary" />
+            </View>
+            <View style={{ width: Spacing.md }} />
+            <View style={{ flex: 1 }}>
+              <Button title="Sell" onPress={() => router.push({ pathname: '/trading', params: { symbol, price: price.toString() } })} variant="danger" />
+            </View>
+          </Animated.View>
+
+          {/* ─── Alert Button ─────────────────────────────────────────── */}
+          <Animated.View entering={FadeIn.delay(420)}>
+            <Pressable
+              style={styles.alertBtn}
+              onPress={() => router.push({ pathname: '/price-alert', params: { symbol, currentPrice: price.toString() } })}
+            >
+              <LinearGradient colors={[Colors.primaryGlow2,'transparent']} style={styles.alertGrad}>
                 <View style={styles.alertIcon}>
                   <MaterialIcons name="notifications-active" size={20} color={Colors.primary} />
                 </View>
-                <Text style={styles.alertButtonText}>Set Price Alert</Text>
+                <Text style={styles.alertTxt}>Set Price Alert</Text>
                 <MaterialIcons name="chevron-right" size={20} color={Colors.textMuted} />
               </LinearGradient>
             </Pressable>
           </Animated.View>
+
+          <View style={{ height: Spacing.xxxl }} />
         </ScrollView>
       </SafeAreaView>
     </View>
@@ -331,187 +234,70 @@ export default function PriceDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  safeArea: {
-    flex: 1,
-  },
+  root: { flex: 1 },
+  safe: { flex: 1 },
+
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md,
   },
-  backButton: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
+  backBtn:      { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  headerCenter: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, flex: 1, justifyContent: 'center' },
+  symbolIcon: {
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: Colors.surfaceElevated, alignItems: 'center',
+    justifyContent: 'center', borderWidth: 1, borderColor: Colors.border,
   },
-  headerInfo: {
-    flex: 1,
-    alignItems: 'center',
+  symbolEmoji:  { fontSize: 18, fontWeight: '700', color: Colors.text },
+  headerName:   { ...Typography.bodyBold, color: Colors.text },
+  headerSym:    { ...Typography.caption, color: Colors.textMuted },
+  favBtn:       { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+
+  priceSection: { alignItems: 'center', paddingVertical: Spacing.lg },
+  priceValue:   { fontSize: isSmall ? 34 : 42, fontWeight: '800', color: Colors.text, letterSpacing: -1, marginBottom: Spacing.sm },
+  changePill:   { borderRadius: BorderRadius.full, overflow: 'hidden' },
+  changePillGrad: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: Spacing.md, paddingVertical: 7, gap: 5,
   },
-  headerTitle: {
-    ...Typography.heading,
-    color: Colors.text,
-    fontWeight: '700',
-    fontSize: isSmallScreen ? 16 : 18,
-  },
-  headerSymbol: {
-    ...Typography.caption,
-    color: Colors.textSecondary,
-    fontSize: isSmallScreen ? 11 : 12,
-  },
-  favoriteButton: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  priceContainer: {
-    alignItems: 'center',
-    paddingVertical: Spacing.lg,
-  },
-  currentPrice: {
-    fontSize: isSmallScreen ? 32 : 40,
-    fontWeight: '800',
-    color: Colors.text,
-    marginBottom: Spacing.sm,
-    letterSpacing: -1,
-  },
-  changeContainer: {
-    borderRadius: BorderRadius.md,
-    overflow: 'hidden',
-  },
-  changeGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    gap: 4,
-  },
-  changeText: {
-    ...Typography.body,
-    fontWeight: '700',
-    fontSize: isSmallScreen ? 15 : 17,
-  },
-  chartContainer: {
-    paddingHorizontal: Spacing.lg,
-    marginBottom: Spacing.lg,
-  },
+  changePct:    { ...Typography.bodyBold, fontWeight: '700', fontSize: isSmall ? 15 : 17 },
+  changePeriod: { ...Typography.caption, color: Colors.textMuted },
+
+  chartSection: { paddingHorizontal: Spacing.lg, marginBottom: Spacing.md },
   chartCard: {
-    borderRadius: BorderRadius.xl,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: Colors.border,
-    ...Shadows.md,
+    borderRadius: BorderRadius.xl, overflow: 'hidden',
+    borderWidth: 1, borderColor: Colors.border, ...Shadows.md,
   },
-  chartGradient: {
-    paddingVertical: Spacing.md,
+  chartGrad: { paddingVertical: Spacing.md },
+  chartPlaceholder: { alignItems: 'center', justifyContent: 'center', gap: Spacing.sm },
+  chartPlaceholderTxt: { ...Typography.caption, color: Colors.textMuted },
+
+  tfRow: { flexDirection: 'row', paddingHorizontal: Spacing.lg, marginBottom: Spacing.xl, gap: Spacing.xs },
+  tfItem: { flex: 1, borderRadius: BorderRadius.sm, overflow: 'hidden' },
+  tfGrad: {
+    paddingVertical: isSmall ? 8 : 10, alignItems: 'center',
+    borderWidth: 1, borderColor: Colors.border,
   },
-  chart: {
-    borderRadius: BorderRadius.lg,
-  },
-  timeFrameContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: Spacing.lg,
-    marginBottom: Spacing.xl,
-    gap: Spacing.xs,
-  },
-  timeFrameButtonWrapper: {
-    flex: 1,
-    borderRadius: BorderRadius.sm,
-    overflow: 'hidden',
-  },
-  timeFrameGradient: {
-    paddingVertical: isSmallScreen ? Spacing.xs : Spacing.sm,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  timeFrameText: {
-    ...Typography.body,
-    color: Colors.textSecondary,
-    fontWeight: '600',
-    fontSize: isSmallScreen ? 12 : 14,
-  },
-  timeFrameTextActive: {
-    color: '#FFF',
-  },
+  tfText:       { ...Typography.captionBold, color: Colors.textSecondary },
+  tfTextActive: { color: '#FFF' },
+
   statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    paddingHorizontal: Spacing.lg,
-    gap: Spacing.sm,
-    marginBottom: Spacing.lg,
+    flexDirection: 'row', flexWrap: 'wrap',
+    paddingHorizontal: Spacing.lg, gap: Spacing.sm, marginBottom: Spacing.lg,
   },
   statCard: {
-    flex: 1,
-    minWidth: isSmallScreen ? '47%' : '48%',
-    borderRadius: BorderRadius.lg,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: Colors.border,
+    flex: 1, minWidth: '47%', borderRadius: BorderRadius.lg,
+    overflow: 'hidden', borderWidth: 1, borderColor: Colors.border,
   },
-  statGradient: {
-    padding: isSmallScreen ? Spacing.sm : Spacing.md,
-  },
-  statIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: Colors.primaryGlow,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing.xs,
-  },
-  statLabel: {
-    ...Typography.caption,
-    color: Colors.textSecondary,
-    marginBottom: 4,
-    fontSize: isSmallScreen ? 11 : 12,
-  },
-  statValue: {
-    ...Typography.bodyBold,
-    color: Colors.text,
-    fontSize: isSmallScreen ? 14 : 16,
-  },
-  actionsContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: Spacing.lg,
-    marginBottom: Spacing.md,
-  },
-  alertButton: {
-    marginHorizontal: Spacing.lg,
-    marginVertical: Spacing.md,
-    borderRadius: BorderRadius.lg,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  alertGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: isSmallScreen ? Spacing.sm : Spacing.md,
-    paddingHorizontal: Spacing.md,
-    gap: Spacing.sm,
-  },
-  alertIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: Colors.primaryGlow,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  alertButtonText: {
-    ...Typography.body,
-    color: Colors.primary,
-    fontWeight: '600',
-    flex: 1,
-    fontSize: isSmallScreen ? 14 : 16,
-  },
+  statGrad:  { padding: isSmall ? Spacing.sm : Spacing.md },
+  statIcon:  { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', marginBottom: Spacing.xs },
+  statLabel: { ...Typography.caption, color: Colors.textSecondary, marginBottom: 4 },
+  statValue: { ...Typography.captionBold, fontWeight: '700', fontSize: isSmall ? 14 : 16 },
+
+  actions:  { flexDirection: 'row', paddingHorizontal: Spacing.lg, marginBottom: Spacing.md },
+
+  alertBtn: { marginHorizontal: Spacing.lg, marginBottom: Spacing.md, borderRadius: BorderRadius.lg, overflow: 'hidden', borderWidth: 1, borderColor: Colors.border },
+  alertGrad: { flexDirection: 'row', alignItems: 'center', padding: isSmall ? Spacing.sm : Spacing.md, gap: Spacing.sm },
+  alertIcon: { width: 36, height: 36, borderRadius: 18, backgroundColor: Colors.primaryGlow, alignItems: 'center', justifyContent: 'center' },
+  alertTxt:  { ...Typography.bodyBold, color: Colors.primary, flex: 1 },
 });

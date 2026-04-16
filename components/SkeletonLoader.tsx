@@ -1,321 +1,152 @@
 import React, { useEffect } from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
 import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withRepeat,
-  withTiming,
-  interpolate,
+  useSharedValue, useAnimatedStyle, withRepeat,
+  withTiming, interpolate,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Colors, BorderRadius, Spacing } from '@/constants/theme';
 
 const { width } = Dimensions.get('window');
-const isSmallScreen = width < 375;
+const isSmall = width < 375;
+
+const SHIMMER_COLORS = ['transparent', 'rgba(124,58,237,0.09)', 'rgba(124,58,237,0.14)', 'rgba(124,58,237,0.09)', 'transparent'] as const;
 
 interface SkeletonLoaderProps {
   variant?: 'card' | 'price' | 'transaction' | 'balance' | 'stat';
   count?: number;
 }
 
-export function SkeletonLoader({ variant = 'card', count = 1 }: SkeletonLoaderProps) {
-  const shimmer = useSharedValue(0);
-
+function Shimmer() {
+  const progress = useSharedValue(0);
   useEffect(() => {
-    shimmer.value = withRepeat(
-      withTiming(1, { duration: 1500 }),
-      -1,
-      false
-    );
+    progress.value = withRepeat(withTiming(1, { duration: 1600 }), -1, false);
   }, []);
 
-  const animatedStyle = useAnimatedStyle(() => {
-    const translateX = interpolate(
-      shimmer.value,
-      [0, 1],
-      [-width, width]
-    );
-
-    return {
-      transform: [{ translateX }],
-    };
-  });
-
-  const renderSkeleton = () => {
-    switch (variant) {
-      case 'balance':
-        return <SkeletonBalance animatedStyle={animatedStyle} />;
-      case 'price':
-        return <SkeletonPrice animatedStyle={animatedStyle} />;
-      case 'transaction':
-        return <SkeletonTransaction animatedStyle={animatedStyle} />;
-      case 'stat':
-        return <SkeletonStat animatedStyle={animatedStyle} />;
-      default:
-        return <SkeletonCard animatedStyle={animatedStyle} />;
-    }
-  };
+  const anim = useAnimatedStyle(() => ({
+    transform: [{ translateX: interpolate(progress.value, [0,1], [-width*1.2, width*1.2]) }],
+  }));
 
   return (
-    <View>
-      {Array.from({ length: count }).map((_, index) => (
-        <View key={index} style={index > 0 ? { marginTop: Spacing.sm } : {}}>
-          {renderSkeleton()}
-        </View>
-      ))}
-    </View>
+    <Animated.View style={[StyleSheet.absoluteFill, anim, { overflow: 'hidden' }]}>
+      <LinearGradient
+        colors={SHIMMER_COLORS}
+        start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+        style={StyleSheet.absoluteFill}
+      />
+    </Animated.View>
   );
 }
 
-// Balance Card Skeleton
-function SkeletonBalance({ animatedStyle }: any) {
+function Box({ w, h, r = 6, mt = 0 }: { w: number|string; h: number; r?: number; mt?: number }) {
+  return <View style={{ width: w as any, height: h, borderRadius: r, backgroundColor: Colors.border, marginTop: mt, overflow: 'hidden' }}><Shimmer /></View>;
+}
+function Circle({ size }: { size: number }) {
+  return <View style={{ width: size, height: size, borderRadius: size/2, backgroundColor: Colors.border, overflow: 'hidden' }}><Shimmer /></View>;
+}
+
+function BalanceSkeleton() {
   return (
-    <View style={styles.balanceCard}>
-      <View style={styles.shimmerContainer}>
-        <Animated.View style={[styles.shimmer, animatedStyle]}>
-          <LinearGradient
-            colors={['transparent', 'rgba(139, 92, 246, 0.1)', 'transparent']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={StyleSheet.absoluteFill}
-          />
-        </Animated.View>
-      </View>
-      <View style={styles.balanceContent}>
-        <View style={[styles.skeletonBox, { width: '40%', height: 16 }]} />
-        <View style={[styles.skeletonBox, { width: '70%', height: 40, marginTop: Spacing.xs }]} />
-        <View style={styles.balanceStats}>
-          <View style={{ flex: 1 }}>
-            <View style={[styles.skeletonBox, { width: '60%', height: 12 }]} />
-            <View style={[styles.skeletonBox, { width: '80%', height: 18, marginTop: 4 }]} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <View style={[styles.skeletonBox, { width: '60%', height: 12 }]} />
-            <View style={[styles.skeletonBox, { width: '80%', height: 18, marginTop: 4 }]} />
-          </View>
-        </View>
+    <View style={sk.balanceCard}>
+      <Shimmer />
+      <Box w="45%" h={14} mt={0} />
+      <Box w="75%" h={42} mt={8} r={8} />
+      <View style={{ flexDirection: 'row', gap: 20, marginTop: 20 }}>
+        <View style={{ flex: 1 }}><Box w="55%" h={12} /><Box w="80%" h={18} mt={4} /></View>
+        <View style={{ flex: 1 }}><Box w="55%" h={12} /><Box w="80%" h={18} mt={4} /></View>
+        <View style={{ flex: 1 }}><Box w="55%" h={12} /><Box w="80%" h={18} mt={4} /></View>
       </View>
     </View>
   );
 }
 
-// Price Card Skeleton
-function SkeletonPrice({ animatedStyle }: any) {
+function PriceSkeleton() {
   return (
-    <View style={styles.priceCard}>
-      <View style={styles.shimmerContainer}>
-        <Animated.View style={[styles.shimmer, animatedStyle]}>
-          <LinearGradient
-            colors={['transparent', 'rgba(139, 92, 246, 0.1)', 'transparent']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={StyleSheet.absoluteFill}
-          />
-        </Animated.View>
-      </View>
-      <View style={styles.priceContent}>
-        <View style={styles.priceLeft}>
-          <View style={styles.skeletonCircle} />
-          <View style={{ marginLeft: Spacing.md }}>
-            <View style={[styles.skeletonBox, { width: 60, height: 16 }]} />
-            <View style={[styles.skeletonBox, { width: 100, height: 12, marginTop: 4 }]} />
-          </View>
-        </View>
-        <View style={styles.priceRight}>
-          <View style={[styles.skeletonBox, { width: 80, height: 16 }]} />
-          <View style={[styles.skeletonBox, { width: 60, height: 12, marginTop: 4 }]} />
-        </View>
-      </View>
-    </View>
-  );
-}
-
-// Transaction Item Skeleton
-function SkeletonTransaction({ animatedStyle }: any) {
-  return (
-    <View style={styles.transactionCard}>
-      <View style={styles.shimmerContainer}>
-        <Animated.View style={[styles.shimmer, animatedStyle]}>
-          <LinearGradient
-            colors={['transparent', 'rgba(139, 92, 246, 0.1)', 'transparent']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={StyleSheet.absoluteFill}
-          />
-        </Animated.View>
-      </View>
-      <View style={styles.transactionContent}>
-        <View style={styles.skeletonCircle} />
-        <View style={{ flex: 1, marginLeft: Spacing.md }}>
-          <View style={[styles.skeletonBox, { width: '50%', height: 16 }]} />
-          <View style={[styles.skeletonBox, { width: '70%', height: 12, marginTop: 4 }]} />
+    <View style={sk.priceCard}>
+      <Shimmer />
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+        <Circle size={isSmall ? 44 : 50} />
+        <View style={{ flex: 1 }}>
+          <Box w="55%" h={15} />
+          <Box w="75%" h={11} mt={5} />
         </View>
         <View style={{ alignItems: 'flex-end' }}>
-          <View style={[styles.skeletonBox, { width: 70, height: 16 }]} />
-          <View style={[styles.skeletonBox, { width: 60, height: 12, marginTop: 4 }]} />
+          <Box w={80} h={15} />
+          <Box w={60} h={22} mt={5} r={BorderRadius.xs} />
         </View>
       </View>
     </View>
   );
 }
 
-// Stat Card Skeleton
-function SkeletonStat({ animatedStyle }: any) {
+function TransactionSkeleton() {
   return (
-    <View style={styles.statCard}>
-      <View style={styles.shimmerContainer}>
-        <Animated.View style={[styles.shimmer, animatedStyle]}>
-          <LinearGradient
-            colors={['transparent', 'rgba(139, 92, 246, 0.1)', 'transparent']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={StyleSheet.absoluteFill}
-          />
-        </Animated.View>
-      </View>
-      <View style={styles.statContent}>
-        <View style={[styles.skeletonBox, { width: '60%', height: 12 }]} />
-        <View style={[styles.skeletonBox, { width: '80%', height: 20, marginTop: Spacing.xs }]} />
+    <View style={sk.txCard}>
+      <Shimmer />
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+        <Circle size={isSmall ? 40 : 46} />
+        <View style={{ flex: 1 }}>
+          <Box w="50%" h={14} />
+          <Box w="35%" h={10} mt={5} />
+        </View>
+        <View style={{ alignItems: 'flex-end' }}>
+          <Box w={70} h={14} />
+          <Box w={55} h={20} mt={5} r={4} />
+        </View>
       </View>
     </View>
   );
 }
 
-// Generic Card Skeleton
-function SkeletonCard({ animatedStyle }: any) {
+function StatSkeleton() {
   return (
-    <View style={styles.card}>
-      <View style={styles.shimmerContainer}>
-        <Animated.View style={[styles.shimmer, animatedStyle]}>
-          <LinearGradient
-            colors={['transparent', 'rgba(139, 92, 246, 0.1)', 'transparent']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={StyleSheet.absoluteFill}
-          />
-        </Animated.View>
-      </View>
-      <View style={styles.cardContent}>
-        <View style={[styles.skeletonBox, { width: '70%', height: 18 }]} />
-        <View style={[styles.skeletonBox, { width: '100%', height: 14, marginTop: Spacing.sm }]} />
-        <View style={[styles.skeletonBox, { width: '90%', height: 14, marginTop: Spacing.xs }]} />
-      </View>
+    <View style={sk.statCard}>
+      <Shimmer />
+      <Circle size={32} />
+      <Box w="65%" h={11} mt={8} />
+      <Box w="80%" h={18} mt={5} />
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  shimmerContainer: {
-    ...StyleSheet.absoluteFillObject,
-    overflow: 'hidden',
-    borderRadius: BorderRadius.lg,
-  },
-  shimmer: {
-    width: '100%',
-    height: '100%',
-  },
-  skeletonBox: {
-    backgroundColor: Colors.border,
-    borderRadius: BorderRadius.xs,
-  },
-  skeletonCircle: {
-    width: isSmallScreen ? 44 : 48,
-    height: isSmallScreen ? 44 : 48,
-    borderRadius: isSmallScreen ? 22 : 24,
-    backgroundColor: Colors.border,
-  },
+function CardSkeleton() {
+  return (
+    <View style={sk.card}>
+      <Shimmer />
+      <Box w="70%" h={18} />
+      <Box w="100%" h={13} mt={10} />
+      <Box w="88%" h={13} mt={6} />
+    </View>
+  );
+}
 
-  // Balance Card
-  balanceCard: {
-    backgroundColor: Colors.surfaceElevated,
-    borderRadius: BorderRadius.xl,
-    padding: Spacing.xl,
-    minHeight: 180,
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  balanceContent: {
-    position: 'relative',
-    zIndex: 1,
-  },
-  balanceStats: {
-    flexDirection: 'row',
-    gap: Spacing.lg,
-    marginTop: Spacing.lg,
-  },
+export function SkeletonLoader({ variant = 'card', count = 1 }: SkeletonLoaderProps) {
+  const render = () => {
+    switch (variant) {
+      case 'balance':     return <BalanceSkeleton />;
+      case 'price':       return <PriceSkeleton />;
+      case 'transaction': return <TransactionSkeleton />;
+      case 'stat':        return <StatSkeleton />;
+      default:            return <CardSkeleton />;
+    }
+  };
+  return (
+    <View style={{ gap: Spacing.xs }}>
+      {Array.from({ length: count }).map((_, i) => <View key={i}>{render()}</View>)}
+    </View>
+  );
+}
 
-  // Price Card
-  priceCard: {
-    backgroundColor: Colors.surfaceElevated,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.md,
-    position: 'relative',
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  priceContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    position: 'relative',
-    zIndex: 1,
-  },
-  priceLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  priceRight: {
-    alignItems: 'flex-end',
-  },
-
-  // Transaction Card
-  transactionCard: {
-    backgroundColor: Colors.surfaceElevated,
-    borderRadius: BorderRadius.lg,
-    padding: isSmallScreen ? Spacing.sm : Spacing.md,
-    position: 'relative',
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  transactionContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    position: 'relative',
-    zIndex: 1,
-  },
-
-  // Stat Card
-  statCard: {
-    backgroundColor: Colors.surfaceElevated,
-    borderRadius: BorderRadius.md,
-    padding: Spacing.md,
-    position: 'relative',
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: Colors.border,
-    flex: 1,
-    minWidth: '45%',
-  },
-  statContent: {
-    position: 'relative',
-    zIndex: 1,
-  },
-
-  // Generic Card
-  card: {
-    backgroundColor: Colors.surfaceElevated,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.md,
-    position: 'relative',
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  cardContent: {
-    position: 'relative',
-    zIndex: 1,
-  },
+const baseCard = {
+  borderRadius: BorderRadius.lg, padding: Spacing.md,
+  borderWidth: 1 as const, borderColor: Colors.border,
+  backgroundColor: Colors.surfaceElevated,
+  overflow: 'hidden' as const, position: 'relative' as const,
+};
+const sk = StyleSheet.create({
+  balanceCard: { ...baseCard, borderRadius: BorderRadius.xl, padding: Spacing.xl, minHeight: 180 },
+  priceCard:   { ...baseCard },
+  txCard:      { ...baseCard, paddingVertical: Spacing.sm },
+  statCard:    { ...baseCard, flex: 1, minWidth: '45%' },
+  card:        { ...baseCard },
 });

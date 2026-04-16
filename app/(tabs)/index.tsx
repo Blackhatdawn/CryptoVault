@@ -1,14 +1,29 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl, Pressable } from 'react-native';
+import {
+  View, Text, StyleSheet, ScrollView, RefreshControl,
+  Pressable, Dimensions,
+} from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import Animated, { FadeInDown, FadeIn, ZoomIn } from 'react-native-reanimated';
 import { useAuth } from '@/hooks/useAuth';
 import { useWallet } from '@/hooks/useWallet';
 import { useLivePrices } from '@/hooks/useLivePrices';
 import { PriceCard } from '@/components/PriceCard';
-import { Colors, Typography, Spacing, BorderRadius, Shadows } from '@/constants/theme';
+import { SkeletonLoader } from '@/components/SkeletonLoader';
+import { Colors, Typography, Spacing, BorderRadius, Shadows, CryptoGradients } from '@/constants/theme';
+
+const { width } = Dimensions.get('window');
+const isSmall = width < 375;
+
+const QUICK_ACTIONS = [
+  { icon: 'add-circle', label: 'Deposit',  route: '/deposit',     gradient: ['#059669','#10B981'] as [string,string], glow: Colors.successGlow },
+  { icon: 'remove-circle', label: 'Withdraw', route: '/withdraw',    gradient: ['#DC2626','#EF4444'] as [string,string], glow: Colors.errorGlow   },
+  { icon: 'swap-horizontal-circle', label: 'Transfer', route: '/transfer',   gradient: ['#2563EB','#3B82F6'] as [string,string], glow: Colors.infoGlow    },
+  { icon: 'show-chart', label: 'Trade',    route: '/trading',     gradient: ['#7C3AED','#4F46E5'] as [string,string], glow: Colors.primaryGlow },
+];
 
 export default function WalletScreen() {
   const router = useRouter();
@@ -17,6 +32,7 @@ export default function WalletScreen() {
   const { balance, isLoading: walletLoading, refresh: refreshWallet } = useWallet();
   const prices = useLivePrices();
   const [refreshing, setRefreshing] = useState(false);
+  const [balanceHidden, setBalanceHidden] = useState(false);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -26,327 +42,273 @@ export default function WalletScreen() {
 
   const topPrices = Array.isArray(prices) ? prices.slice(0, 5) : [];
 
+  const formatBalance = (val: number) =>
+    balanceHidden ? '••••••' : `$${val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
   return (
-    <View style={styles.container}>
-      <LinearGradient
-        colors={[Colors.background, Colors.surface]}
-        style={StyleSheet.absoluteFill}
-      />
-      
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <View style={styles.root}>
+      <LinearGradient colors={[Colors.background, Colors.surface]} style={StyleSheet.absoluteFill} />
+
+      <SafeAreaView style={styles.safe} edges={['top']}>
         <ScrollView
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />
           }
         >
-          {/* Header */}
-          <View style={[styles.header, { paddingTop: insets.top + Spacing.sm }]}>
+          {/* ─── Header ─────────────────────────────────────────────── */}
+          <Animated.View entering={FadeIn.duration(400)} style={styles.header}>
             <View>
-              <Text style={styles.greeting}>Welcome back,</Text>
-              <Text style={styles.userName}>{user?.name || 'Trader'}</Text>
+              <Text style={styles.greeting}>Good {getGreeting()},</Text>
+              <Text style={styles.userName}>{user?.name?.split(' ')[0] || 'Trader'} 👋</Text>
             </View>
-            <Pressable
-              onPress={() => router.push('/notifications')}
-              style={styles.notificationButton}
-            >
-              <View style={styles.notificationBadge} />
-              <MaterialIcons name="notifications-none" size={28} color={Colors.text} />
-            </Pressable>
-          </View>
-
-          {/* Hero Balance Card */}
-          <View style={styles.heroSection}>
-            <Pressable style={styles.balanceCard}>
-              <LinearGradient
-                colors={['#8B5CF6', '#6366F1']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.balanceGradient}
-              >
-                {/* Glass overlay */}
-                <View style={styles.glassOverlay} />
-                
-                {/* Floating circles decoration */}
-                <View style={[styles.floatingCircle, styles.circle1]} />
-                <View style={[styles.floatingCircle, styles.circle2]} />
-                
-                <View style={styles.balanceContent}>
-                  <View style={styles.balanceTop}>
-                    <View>
-                      <Text style={styles.balanceLabel}>Total Balance</Text>
-                      <Text style={styles.balanceAmount}>
-                        ${balance?.total_usd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
-                      </Text>
-                    </View>
-                    <Pressable style={styles.eyeButton}>
-                      <MaterialIcons name="visibility" size={24} color="rgba(255,255,255,0.9)" />
-                    </Pressable>
-                  </View>
-
-                  <View style={styles.balanceStats}>
-                    <View style={styles.statItem}>
-                      <Text style={styles.statLabel}>Available</Text>
-                      <Text style={styles.statValue}>
-                        ${balance?.available_usd.toFixed(2) || '0.00'}
-                      </Text>
-                    </View>
-                    <View style={styles.statDivider} />
-                    <View style={styles.statItem}>
-                      <Text style={styles.statLabel}>In Orders</Text>
-                      <Text style={styles.statValue}>
-                        ${balance?.locked_usd.toFixed(2) || '0.00'}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-              </LinearGradient>
-            </Pressable>
-          </View>
-
-          {/* Quick Actions */}
-          <View style={styles.quickActions}>
-            <Pressable
-              style={styles.actionCard}
-              onPress={() => router.push('/deposit')}
-            >
-              <View style={[styles.actionIcon, { backgroundColor: Colors.successGlow }]}>
-                <MaterialIcons name="add" size={28} color={Colors.success} />
-              </View>
-              <Text style={styles.actionLabel}>Deposit</Text>
-            </Pressable>
-
-            <Pressable
-              style={styles.actionCard}
-              onPress={() => router.push('/withdraw')}
-            >
-              <View style={[styles.actionIcon, { backgroundColor: Colors.errorGlow }]}>
-                <MaterialIcons name="remove" size={28} color={Colors.error} />
-              </View>
-              <Text style={styles.actionLabel}>Withdraw</Text>
-            </Pressable>
-
-            <Pressable
-              style={styles.actionCard}
-              onPress={() => router.push('/transfer')}
-            >
-              <View style={[styles.actionIcon, { backgroundColor: Colors.infoGlow }]}>
-                <MaterialIcons name="swap-horiz" size={28} color={Colors.info} />
-              </View>
-              <Text style={styles.actionLabel}>Transfer</Text>
-            </Pressable>
-
-            <Pressable
-              style={styles.actionCard}
-              onPress={() => router.push('/price-alert')}
-            >
-              <View style={[styles.actionIcon, { backgroundColor: Colors.warningGlow }]}>
-                <MaterialIcons name="notifications-active" size={28} color={Colors.warning} />
-              </View>
-              <Text style={styles.actionLabel}>Alerts</Text>
-            </Pressable>
-          </View>
-
-          {/* Market Overview */}
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Market Overview</Text>
-              <Pressable onPress={() => router.push('/(tabs)/markets')}>
-                <Text style={styles.seeAllText}>See All</Text>
+            <View style={styles.headerActions}>
+              <Pressable onPress={() => router.push('/notifications')} style={styles.iconBtn}>
+                <MaterialIcons name="notifications-none" size={24} color={Colors.text} />
+                <View style={styles.notifDot} />
+              </Pressable>
+              <Pressable onPress={() => router.push('/(tabs)/account')} style={styles.avatarBtn}>
+                <LinearGradient colors={['#7C3AED','#4F46E5']} style={styles.avatarGradient}>
+                  <Text style={styles.avatarLetter}>{user?.name?.charAt(0).toUpperCase() || 'U'}</Text>
+                </LinearGradient>
               </Pressable>
             </View>
+          </Animated.View>
 
-            <View style={styles.priceList}>
-              {topPrices.map((crypto) => (
-                <PriceCard key={crypto.symbol} price={crypto} />
-              ))}
-            </View>
+          {/* ─── Hero Balance Card ───────────────────────────────────── */}
+          <Animated.View entering={FadeInDown.delay(80).springify()} style={styles.heroWrap}>
+            <LinearGradient
+              colors={['#7C3AED','#4F46E5','#2563EB']}
+              start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+              style={styles.heroCard}
+            >
+              {/* Glass sheen */}
+              <View style={styles.heroBgSheen} />
+              {/* Decorative circles */}
+              <View style={[styles.deco, styles.deco1]} />
+              <View style={[styles.deco, styles.deco2]} />
+              <View style={[styles.deco, styles.deco3]} />
+
+              <View style={styles.heroContent}>
+                <View style={styles.heroTop}>
+                  <View>
+                    <Text style={styles.heroLabel}>Portfolio Balance</Text>
+                    {walletLoading ? (
+                      <View style={styles.balanceSkeleton} />
+                    ) : (
+                      <Text style={styles.heroBalance}>
+                        {formatBalance(balance?.total_usd || 0)}
+                      </Text>
+                    )}
+                    <View style={styles.heroChange}>
+                      <MaterialIcons name="trending-up" size={14} color="rgba(255,255,255,0.9)" />
+                      <Text style={styles.heroChangeTxt}>+2.34% today</Text>
+                    </View>
+                  </View>
+                  <Pressable style={styles.eyeBtn} onPress={() => setBalanceHidden(!balanceHidden)}>
+                    <MaterialIcons
+                      name={balanceHidden ? 'visibility-off' : 'visibility'}
+                      size={20} color="rgba(255,255,255,0.85)"
+                    />
+                  </Pressable>
+                </View>
+
+                <View style={styles.heroStats}>
+                  <View style={styles.heroStatItem}>
+                    <Text style={styles.heroStatLabel}>Available</Text>
+                    <Text style={styles.heroStatValue}>
+                      {balanceHidden ? '••••' : `$${(balance?.available_usd || 0).toFixed(2)}`}
+                    </Text>
+                  </View>
+                  <View style={styles.heroDivider} />
+                  <View style={styles.heroStatItem}>
+                    <Text style={styles.heroStatLabel}>In Orders</Text>
+                    <Text style={styles.heroStatValue}>
+                      {balanceHidden ? '••••' : `$${(balance?.locked_usd || 0).toFixed(2)}`}
+                    </Text>
+                  </View>
+                  <View style={styles.heroDivider} />
+                  <View style={styles.heroStatItem}>
+                    <Text style={styles.heroStatLabel}>P&L</Text>
+                    <Text style={[styles.heroStatValue, { color: '#34D399' }]}>+$128</Text>
+                  </View>
+                </View>
+              </View>
+            </LinearGradient>
+          </Animated.View>
+
+          {/* ─── Quick Actions ───────────────────────────────────────── */}
+          <View style={styles.actionsRow}>
+            {QUICK_ACTIONS.map((a, i) => (
+              <Animated.View key={a.label} entering={ZoomIn.delay(120 + i * 60).springify()} style={styles.actionItem}>
+                <Pressable
+                  onPress={() => router.push(a.route as any)}
+                  style={({ pressed }) => [styles.actionBtn, pressed && { opacity: 0.8, transform: [{ scale: 0.95 }] }]}
+                >
+                  <LinearGradient colors={a.gradient} style={styles.actionIconWrap}>
+                    <MaterialIcons name={a.icon as any} size={28} color="#FFF" />
+                  </LinearGradient>
+                  <Text style={styles.actionLabel}>{a.label}</Text>
+                </Pressable>
+              </Animated.View>
+            ))}
           </View>
 
-          {/* Bottom Padding */}
-          <View style={{ height: Spacing.xxxl }} />
+          {/* ─── Portfolio Summary Strip ──────────────────────────────── */}
+          <Animated.View entering={FadeInDown.delay(250).springify()}>
+            <View style={styles.stripRow}>
+              {[
+                { label: 'BTC', pct: '+5.2%', pos: true, color: CryptoGradients.BTC },
+                { label: 'ETH', pct: '-1.4%', pos: false, color: CryptoGradients.ETH },
+                { label: 'SOL', pct: '+8.9%', pos: true, color: CryptoGradients.SOL },
+              ].map((c) => (
+                <View key={c.label} style={styles.stripCard}>
+                  <LinearGradient colors={c.color as any} style={styles.stripDot} />
+                  <Text style={styles.stripLabel}>{c.label}</Text>
+                  <Text style={[styles.stripPct, { color: c.pos ? Colors.success : Colors.error }]}>{c.pct}</Text>
+                </View>
+              ))}
+              <Pressable style={styles.stripCard} onPress={() => router.push('/(tabs)/markets')}>
+                <MaterialIcons name="arrow-forward" size={18} color={Colors.primary} />
+                <Text style={[styles.stripLabel, { color: Colors.primary }]}>All</Text>
+              </Pressable>
+            </View>
+          </Animated.View>
+
+          {/* ─── Market Overview ─────────────────────────────────────── */}
+          <Animated.View entering={FadeInDown.delay(320).springify()}>
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <View>
+                  <Text style={styles.sectionTitle}>Live Markets</Text>
+                  <Text style={styles.sectionSub}>Real-time prices</Text>
+                </View>
+                <Pressable onPress={() => router.push('/(tabs)/markets')} style={styles.seeAllBtn}>
+                  <Text style={styles.seeAll}>See All</Text>
+                  <MaterialIcons name="chevron-right" size={18} color={Colors.primary} />
+                </Pressable>
+              </View>
+
+              {walletLoading ? (
+                <SkeletonLoader variant="price" count={4} />
+              ) : (
+                <View style={styles.priceList}>
+                  {topPrices.map((crypto, i) => (
+                    <Animated.View key={crypto.symbol} entering={FadeInDown.delay(380 + i * 60).springify()}>
+                      <PriceCard price={crypto} />
+                    </Animated.View>
+                  ))}
+                </View>
+              )}
+            </View>
+          </Animated.View>
+
+          {/* ─── Bottom Pad ──────────────────────────────────────────── */}
+          <View style={{ height: Spacing.xxxl + insets.bottom }} />
         </ScrollView>
       </SafeAreaView>
     </View>
   );
 }
 
+function getGreeting() {
+  const h = new Date().getHours();
+  if (h < 12) return 'Morning';
+  if (h < 17) return 'Afternoon';
+  return 'Evening';
+}
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  safeArea: {
-    flex: 1,
-  },
+  root:  { flex: 1 },
+  safe:  { flex: 1 },
+
+  // Header
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.lg,
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    paddingHorizontal: Spacing.lg, paddingTop: Spacing.md, paddingBottom: Spacing.sm,
   },
-  greeting: {
-    ...Typography.caption,
-    color: Colors.textSecondary,
-    marginBottom: 2,
+  greeting:    { ...Typography.caption, color: Colors.textSecondary },
+  userName:    { ...Typography.h3, color: Colors.text, fontWeight: '700', marginTop: 2 },
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
+  iconBtn: {
+    width: 44, height: 44, borderRadius: 22,
+    backgroundColor: Colors.surfaceElevated, alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, borderColor: Colors.border, position: 'relative',
   },
-  userName: {
-    ...Typography.h2,
-    color: Colors.text,
+  notifDot: {
+    position: 'absolute', top: 10, right: 10,
+    width: 8, height: 8, borderRadius: 4, backgroundColor: Colors.error,
+    borderWidth: 1, borderColor: Colors.surface,
   },
-  notificationButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: Colors.surfaceElevated,
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
+  avatarBtn: { borderRadius: 22, overflow: 'hidden', ...Shadows.primaryGlow },
+  avatarGradient: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  avatarLetter: { color: '#FFF', fontSize: 18, fontWeight: '700' },
+
+  // Hero card
+  heroWrap: { paddingHorizontal: Spacing.lg, marginBottom: Spacing.lg },
+  heroCard: {
+    borderRadius: BorderRadius.xl, padding: Spacing.xl, minHeight: 200,
+    overflow: 'hidden', position: 'relative', ...Shadows.xl,
   },
-  notificationBadge: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: Colors.error,
-  },
-  heroSection: {
-    paddingHorizontal: Spacing.lg,
-    marginBottom: Spacing.xl,
-  },
-  balanceCard: {
-    borderRadius: BorderRadius.xl,
-    overflow: 'hidden',
-    ...Shadows.xl,
-  },
-  balanceGradient: {
-    padding: Spacing.xl,
-    position: 'relative',
-    minHeight: 180,
-  },
-  glassOverlay: {
+  heroBgSheen: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: 'rgba(255,255,255,0.04)',
   },
-  floatingCircle: {
-    position: 'absolute',
-    borderRadius: 9999,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  deco: { position: 'absolute', borderRadius: 9999, backgroundColor: 'rgba(255,255,255,0.07)' },
+  deco1: { width: 160, height: 160, top: -50, right: -40 },
+  deco2: { width: 100, height: 100, bottom: -30, left: -20 },
+  deco3: { width: 60,  height: 60,  top: 40,    right: 80 },
+  heroContent: { position: 'relative', zIndex: 1 },
+  heroTop:     { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: Spacing.lg },
+  heroLabel:   { fontSize: 13, color: 'rgba(255,255,255,0.75)', marginBottom: 6, fontWeight: '500' },
+  heroBalance: { fontSize: isSmall ? 34 : 40, fontWeight: '800', color: '#FFF', letterSpacing: -1.5 },
+  balanceSkeleton: { width: 180, height: 44, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: BorderRadius.md, marginTop: 4 },
+  heroChange: { flexDirection: 'row', alignItems: 'center', marginTop: 6, gap: 3 },
+  heroChangeTxt: { fontSize: 12, color: 'rgba(255,255,255,0.8)', fontWeight: '600' },
+  eyeBtn: {
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center',
   },
-  circle1: {
-    width: 120,
-    height: 120,
-    top: -30,
-    right: -20,
+  heroStats:   { flexDirection: 'row', alignItems: 'center' },
+  heroStatItem:{ flex: 1 },
+  heroStatLabel:{ fontSize: 11, color: 'rgba(255,255,255,0.65)', marginBottom: 3, fontWeight: '500' },
+  heroStatValue:{ fontSize: 16, fontWeight: '700', color: '#FFF' },
+  heroDivider: { width: 1, height: 36, backgroundColor: 'rgba(255,255,255,0.18)', marginHorizontal: Spacing.sm },
+
+  // Quick Actions
+  actionsRow: {
+    flexDirection: 'row', paddingHorizontal: Spacing.lg,
+    marginBottom: Spacing.lg, gap: Spacing.sm,
   },
-  circle2: {
-    width: 80,
-    height: 80,
-    bottom: -20,
-    left: -10,
+  actionItem: { flex: 1 },
+  actionBtn:  { alignItems: 'center' },
+  actionIconWrap: {
+    width: isSmall ? 52 : 60, height: isSmall ? 52 : 60,
+    borderRadius: isSmall ? 26 : 30, alignItems: 'center', justifyContent: 'center',
+    marginBottom: 8, ...Shadows.md,
   },
-  balanceContent: {
-    position: 'relative',
-    zIndex: 1,
+  actionLabel: { ...Typography.micro, color: Colors.textSecondary, fontWeight: '600', textAlign: 'center' },
+
+  // Strip
+  stripRow: {
+    flexDirection: 'row', marginHorizontal: Spacing.lg, marginBottom: Spacing.lg,
+    backgroundColor: Colors.surfaceElevated, borderRadius: BorderRadius.lg,
+    borderWidth: 1, borderColor: Colors.border, padding: Spacing.sm,
   },
-  balanceTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: Spacing.lg,
+  stripCard: {
+    flex: 1, alignItems: 'center', justifyContent: 'center',
+    flexDirection: 'row', gap: 5, paddingVertical: 6,
   },
-  balanceLabel: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.8)',
-    marginBottom: 4,
-  },
-  balanceAmount: {
-    fontSize: 36,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    letterSpacing: -1,
-  },
-  eyeButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  balanceStats: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  statItem: {
-    flex: 1,
-  },
-  statLabel: {
-    fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.7)',
-    marginBottom: 2,
-  },
-  statValue: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  statDivider: {
-    width: 1,
-    height: 32,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    marginHorizontal: Spacing.md,
-  },
-  quickActions: {
-    flexDirection: 'row',
-    paddingHorizontal: Spacing.lg,
-    gap: Spacing.md,
-    marginBottom: Spacing.xl,
-  },
-  actionCard: {
-    flex: 1,
-    backgroundColor: Colors.surfaceElevated,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.md,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  actionIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing.sm,
-  },
-  actionLabel: {
-    ...Typography.caption,
-    color: Colors.text,
-    fontWeight: '600',
-  },
-  section: {
-    paddingHorizontal: Spacing.lg,
-    marginBottom: Spacing.lg,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: Spacing.md,
-  },
-  sectionTitle: {
-    ...Typography.h3,
-    color: Colors.text,
-  },
-  seeAllText: {
-    ...Typography.body,
-    color: Colors.primary,
-    fontWeight: '600',
-  },
-  priceList: {
-    gap: Spacing.sm,
-  },
+  stripDot:   { width: 10, height: 10, borderRadius: 5 },
+  stripLabel: { ...Typography.captionBold, color: Colors.text },
+  stripPct:   { ...Typography.caption, fontWeight: '700', fontSize: 12 },
+
+  // Section
+  section: { paddingHorizontal: Spacing.lg, marginBottom: Spacing.lg },
+  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: Spacing.md },
+  sectionTitle: { ...Typography.h4, color: Colors.text },
+  sectionSub:   { ...Typography.caption, color: Colors.textMuted, marginTop: 2 },
+  seeAllBtn:    { flexDirection: 'row', alignItems: 'center' },
+  seeAll:       { ...Typography.captionBold, color: Colors.primary },
+  priceList:    { gap: Spacing.sm },
 });

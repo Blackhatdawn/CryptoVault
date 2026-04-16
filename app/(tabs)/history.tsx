@@ -1,188 +1,227 @@
-import React from 'react';
-import { View, Text, StyleSheet, FlatList, RefreshControl, Dimensions } from 'react-native';
+import React, { useState } from 'react';
+import {
+  View, Text, StyleSheet, FlatList, RefreshControl,
+  Pressable, Dimensions,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useTransactions } from '@/hooks/useTransactions';
 import { TransactionItem } from '@/components/TransactionItem';
-import { Colors, Typography, Spacing, BorderRadius } from '@/constants/theme';
+import { SkeletonLoader } from '@/components/SkeletonLoader';
+import { Colors, Typography, Spacing, BorderRadius, Shadows } from '@/constants/theme';
 
 const { width } = Dimensions.get('window');
-const isSmallScreen = width < 375;
+const isSmall = width < 375;
+
+const FILTER_TABS = [
+  { key: 'all',       label: 'All',      icon: 'list' },
+  { key: 'deposit',   label: 'Deposits', icon: 'arrow-downward' },
+  { key: 'withdrawal',label: 'Withdrawals',icon: 'arrow-upward' },
+  { key: 'transfer',  label: 'Transfers',icon: 'swap-horiz' },
+];
 
 export default function HistoryScreen() {
   const { transactions, isLoading, isRefreshing, refresh } = useTransactions();
+  const [activeFilter, setActiveFilter] = useState('all');
+
+  const filtered = transactions
+    ? transactions.filter(t => activeFilter === 'all' || t.type === activeFilter || t.type.startsWith(activeFilter))
+    : [];
+
+  const totalIn  = transactions?.filter(t => t.type === 'deposit').reduce((s, t) => s + t.amount, 0) || 0;
+  const totalOut = transactions?.filter(t => t.type !== 'deposit').reduce((s, t) => s + t.amount, 0) || 0;
 
   return (
-    <View style={styles.container}>
-      <LinearGradient
-        colors={[Colors.background, Colors.surface]}
-        style={StyleSheet.absoluteFill}
-      />
+    <View style={styles.root}>
+      <LinearGradient colors={[Colors.background, Colors.surface]} style={StyleSheet.absoluteFill} />
+      <SafeAreaView style={styles.safe} edges={['top']}>
 
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
-        {/* Header */}
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.title}>Transaction History</Text>
-            <Text style={styles.subtitle}>All your crypto activities</Text>
-          </View>
-        </View>
+        {/* ─── Header ────────────────────────────────────────────────── */}
+        <Animated.View entering={FadeInDown.duration(300)} style={styles.header}>
+          <Text style={styles.title}>History</Text>
+          <Text style={styles.subtitle}>All your crypto activities</Text>
+        </Animated.View>
 
-        {/* Transactions List */}
-        <FlatList
-          data={transactions}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <TransactionItem transaction={item} />}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={isRefreshing}
-              onRefresh={refresh}
-              tintColor={Colors.primary}
-              colors={[Colors.primary]}
-            />
-          }
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              {/* Empty Icon */}
-              <View style={styles.emptyIconContainer}>
-                <LinearGradient
-                  colors={['rgba(139, 92, 246, 0.1)', 'rgba(99, 102, 241, 0.05)']}
-                  style={styles.emptyIconGradient}
-                >
-                  <MaterialIcons name="receipt-long" size={isSmallScreen ? 48 : 64} color={Colors.textMuted} />
-                </LinearGradient>
+        {/* ─── Summary Cards ────────────────────────────────────────── */}
+        <Animated.View entering={FadeInDown.delay(60).duration(300)} style={styles.summaryRow}>
+          <View style={styles.summaryCard}>
+            <LinearGradient colors={[Colors.successGlow2, 'transparent']} style={styles.summaryGrad}>
+              <View style={styles.summaryIcon}>
+                <MaterialIcons name="arrow-downward" size={18} color={Colors.success} />
               </View>
-
-              {/* Empty Text */}
-              <Text style={styles.emptyTitle}>No Transactions Yet</Text>
-              <Text style={styles.emptySubtitle}>
-                Your transaction history will appear here once you start trading
+              <Text style={styles.summaryLabel}>Total In</Text>
+              <Text style={[styles.summaryValue, { color: Colors.success }]}>
+                +${totalIn.toFixed(2)}
               </Text>
+            </LinearGradient>
+          </View>
+          <View style={styles.summaryCard}>
+            <LinearGradient colors={[Colors.errorGlow2, 'transparent']} style={styles.summaryGrad}>
+              <View style={[styles.summaryIcon, { backgroundColor: Colors.errorGlow }]}>
+                <MaterialIcons name="arrow-upward" size={18} color={Colors.error} />
+              </View>
+              <Text style={styles.summaryLabel}>Total Out</Text>
+              <Text style={[styles.summaryValue, { color: Colors.error }]}>
+                -${totalOut.toFixed(2)}
+              </Text>
+            </LinearGradient>
+          </View>
+          <View style={styles.summaryCard}>
+            <LinearGradient colors={[Colors.primaryGlow2, 'transparent']} style={styles.summaryGrad}>
+              <View style={[styles.summaryIcon, { backgroundColor: Colors.primaryGlow }]}>
+                <MaterialIcons name="receipt-long" size={18} color={Colors.primary} />
+              </View>
+              <Text style={styles.summaryLabel}>Total Txns</Text>
+              <Text style={[styles.summaryValue, { color: Colors.primary }]}>
+                {transactions?.length || 0}
+              </Text>
+            </LinearGradient>
+          </View>
+        </Animated.View>
 
-              {/* Info Cards */}
-              <View style={styles.infoCards}>
-                <View style={styles.infoCard}>
-                  <View style={styles.infoIconContainer}>
-                    <MaterialIcons name="account-balance-wallet" size={20} color={Colors.success} />
-                  </View>
-                  <Text style={styles.infoCardText}>Deposit crypto to get started</Text>
-                </View>
+        {/* ─── Filter Tabs ──────────────────────────────────────────── */}
+        <Animated.View entering={FadeInDown.delay(100).duration(300)}>
+          <View style={styles.filterRow}>
+            {FILTER_TABS.map(tab => (
+              <Pressable key={tab.key} onPress={() => setActiveFilter(tab.key)} style={styles.filterItem}>
+                <LinearGradient
+                  colors={activeFilter === tab.key ? ['#7C3AED','#4F46E5'] : ['transparent','transparent']}
+                  style={styles.filterGrad}
+                >
+                  <MaterialIcons
+                    name={tab.icon as any}
+                    size={15}
+                    color={activeFilter === tab.key ? '#FFF' : Colors.textMuted}
+                  />
+                  <Text style={[styles.filterText, activeFilter === tab.key && styles.filterTextActive]}>
+                    {tab.label}
+                  </Text>
+                </LinearGradient>
+              </Pressable>
+            ))}
+          </View>
+        </Animated.View>
 
-                <View style={styles.infoCard}>
-                  <View style={styles.infoIconContainer}>
-                    <MaterialIcons name="swap-horiz" size={20} color={Colors.info} />
-                  </View>
-                  <Text style={styles.infoCardText}>Make transfers and trades</Text>
-                </View>
-
-                <View style={styles.infoCard}>
-                  <View style={styles.infoIconContainer}>
-                    <MaterialIcons name="history" size={20} color={Colors.warning} />
-                  </View>
-                  <Text style={styles.infoCardText}>Track all your activities</Text>
+        {/* ─── List ─────────────────────────────────────────────────── */}
+        {isLoading ? (
+          <View style={styles.listPad}>
+            <SkeletonLoader variant="transaction" count={6} />
+          </View>
+        ) : (
+          <FlatList
+            data={filtered}
+            keyExtractor={item => item.id}
+            renderItem={({ item, index }) => (
+              <Animated.View entering={FadeInDown.delay(index * 40).duration(200)}>
+                <TransactionItem transaction={item} />
+              </Animated.View>
+            )}
+            contentContainerStyle={styles.listPad}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={isRefreshing}
+                onRefresh={refresh}
+                tintColor={Colors.primary}
+              />
+            }
+            ListEmptyComponent={
+              <View style={styles.empty}>
+                <LinearGradient
+                  colors={['rgba(124,58,237,0.1)','rgba(79,70,229,0.04)']}
+                  style={styles.emptyIconWrap}
+                >
+                  <MaterialIcons name="receipt-long" size={56} color={Colors.textMuted} />
+                </LinearGradient>
+                <Text style={styles.emptyTitle}>No Transactions</Text>
+                <Text style={styles.emptyText}>
+                  {activeFilter !== 'all'
+                    ? `No ${activeFilter} transactions yet`
+                    : 'Your transaction history will appear here'}
+                </Text>
+                <View style={styles.emptyHints}>
+                  {[
+                    { icon: 'account-balance-wallet', label: 'Deposit crypto to start', color: Colors.success },
+                    { icon: 'swap-horiz',             label: 'Transfer to other users',  color: Colors.info   },
+                    { icon: 'show-chart',             label: 'Trade crypto assets',       color: Colors.primary},
+                  ].map((h, i) => (
+                    <View key={i} style={styles.hintCard}>
+                      <View style={[styles.hintIcon, { backgroundColor: `${h.color}20` }]}>
+                        <MaterialIcons name={h.icon as any} size={18} color={h.color} />
+                      </View>
+                      <Text style={styles.hintText}>{h.label}</Text>
+                    </View>
+                  ))}
                 </View>
               </View>
-            </View>
-          }
-        />
+            }
+          />
+        )}
       </SafeAreaView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  safeArea: {
-    flex: 1,
-  },
+  root: { flex: 1 },
+  safe: { flex: 1 },
+
   header: {
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.md,
-    paddingBottom: Spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    paddingHorizontal: Spacing.lg, paddingTop: Spacing.md, paddingBottom: Spacing.sm,
+    borderBottomWidth: 1, borderBottomColor: Colors.border,
   },
-  title: {
-    ...Typography.h2,
-    color: Colors.text,
-    fontSize: isSmallScreen ? 24 : 28,
-    marginBottom: 2,
+  title:    { ...Typography.h2, color: Colors.text, fontSize: isSmall ? 22 : 26 },
+  subtitle: { ...Typography.caption, color: Colors.textSecondary, marginTop: 2 },
+
+  summaryRow: {
+    flexDirection: 'row', paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md, gap: Spacing.sm,
   },
-  subtitle: {
-    ...Typography.caption,
-    color: Colors.textSecondary,
-    fontSize: isSmallScreen ? 12 : 14,
+  summaryCard: {
+    flex: 1, borderRadius: BorderRadius.lg, overflow: 'hidden',
+    borderWidth: 1, borderColor: Colors.border,
   },
-  listContent: {
-    padding: Spacing.lg,
-    paddingBottom: Spacing.xxxl,
+  summaryGrad:  { padding: Spacing.sm },
+  summaryIcon:  {
+    width: 32, height: 32, borderRadius: 16,
+    backgroundColor: Colors.successGlow, alignItems: 'center',
+    justifyContent: 'center', marginBottom: 6,
   },
-  emptyContainer: {
-    alignItems: 'center',
-    paddingVertical: isSmallScreen ? Spacing.xl : Spacing.xxl,
-    paddingHorizontal: Spacing.md,
+  summaryLabel: { ...Typography.micro, color: Colors.textMuted, marginBottom: 3 },
+  summaryValue: { ...Typography.captionBold, fontWeight: '700' },
+
+  filterRow: {
+    flexDirection: 'row', paddingHorizontal: Spacing.lg,
+    marginBottom: Spacing.sm, gap: Spacing.xs,
   },
-  emptyIconContainer: {
-    width: isSmallScreen ? 120 : 140,
-    height: isSmallScreen ? 120 : 140,
-    borderRadius: isSmallScreen ? 60 : 70,
-    overflow: 'hidden',
-    marginBottom: Spacing.lg,
+  filterItem: { borderRadius: BorderRadius.full, overflow: 'hidden', flex: 1 },
+  filterGrad: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    paddingVertical: 8, gap: 4, borderWidth: 1, borderColor: Colors.border,
+    borderRadius: BorderRadius.full,
   },
-  emptyIconGradient: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: Colors.border,
-    borderRadius: isSmallScreen ? 60 : 70,
+  filterText: { ...Typography.micro, color: Colors.textMuted, fontSize: isSmall ? 9 : 10 },
+  filterTextActive: { color: '#FFF' },
+
+  listPad: { padding: Spacing.lg, paddingBottom: Spacing.xxxl, gap: Spacing.xs },
+
+  empty: { alignItems: 'center', paddingVertical: Spacing.xl },
+  emptyIconWrap: {
+    width: isSmall ? 100 : 120, height: isSmall ? 100 : 120,
+    borderRadius: isSmall ? 50 : 60,
+    alignItems: 'center', justifyContent: 'center',
+    marginBottom: Spacing.lg, borderWidth: 1, borderColor: Colors.border,
   },
-  emptyTitle: {
-    ...Typography.h3,
-    color: Colors.text,
-    marginBottom: Spacing.xs,
-    fontSize: isSmallScreen ? 20 : 24,
+  emptyTitle: { ...Typography.h3, color: Colors.text, marginBottom: Spacing.xs },
+  emptyText:  { ...Typography.body, color: Colors.textSecondary, textAlign: 'center', marginBottom: Spacing.xl, maxWidth: 260 },
+  emptyHints: { width: '100%', gap: Spacing.sm },
+  hintCard: {
+    flexDirection: 'row', alignItems: 'center', gap: Spacing.sm,
+    backgroundColor: Colors.surfaceElevated, borderRadius: BorderRadius.md,
+    padding: Spacing.sm, borderWidth: 1, borderColor: Colors.border,
   },
-  emptySubtitle: {
-    ...Typography.body,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    marginBottom: Spacing.xl,
-    maxWidth: 280,
-    lineHeight: 22,
-    fontSize: isSmallScreen ? 14 : 16,
-  },
-  infoCards: {
-    width: '100%',
-    gap: Spacing.sm,
-  },
-  infoCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.surfaceElevated,
-    borderRadius: BorderRadius.md,
-    padding: isSmallScreen ? Spacing.sm : Spacing.md,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    gap: Spacing.sm,
-  },
-  infoIconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: Colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  infoCardText: {
-    ...Typography.body,
-    color: Colors.textSecondary,
-    flex: 1,
-    fontSize: isSmallScreen ? 13 : 14,
-  },
+  hintIcon: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  hintText: { ...Typography.caption, color: Colors.textSecondary },
 });

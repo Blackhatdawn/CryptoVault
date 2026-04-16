@@ -6,115 +6,72 @@ import { Colors, BorderRadius, Typography, Spacing } from '@/constants/theme';
 import type { Transaction } from '@/types';
 
 const { width } = Dimensions.get('window');
-const isSmallScreen = width < 375;
+const isSmall = width < 375;
 
-interface TransactionItemProps {
-  transaction: Transaction;
-}
+const TYPE_CONFIG: Record<string, { icon: string; label: string; gradient: string[] }> = {
+  deposit:           { icon: 'arrow-downward', label: 'Deposit',          gradient: ['#059669','#10B981'] },
+  withdrawal:        { icon: 'arrow-upward',   label: 'Withdrawal',       gradient: ['#DC2626','#EF4444'] },
+  transfer:          { icon: 'swap-horiz',      label: 'Transfer',         gradient: ['#2563EB','#3B82F6'] },
+  transfer_sent:     { icon: 'send',            label: 'Sent',             gradient: ['#2563EB','#3B82F6'] },
+  transfer_received: { icon: 'move-to-inbox',   label: 'Received',         gradient: ['#059669','#10B981'] },
+  trade:             { icon: 'show-chart',      label: 'Trade',            gradient: ['#7C3AED','#4F46E5'] },
+};
+
+const STATUS_CONFIG: Record<string, { color: string; label: string }> = {
+  completed: { color: Colors.success, label: 'Completed' },
+  pending:   { color: Colors.warning, label: 'Pending'   },
+  failed:    { color: Colors.error,   label: 'Failed'    },
+};
+
+interface TransactionItemProps { transaction: Transaction }
 
 export const TransactionItem: React.FC<TransactionItemProps> = ({ transaction }) => {
-  const getIcon = () => {
-    switch (transaction.type) {
-      case 'deposit':
-        return 'arrow-downward';
-      case 'withdrawal':
-        return 'arrow-upward';
-      case 'transfer':
-      case 'transfer_sent':
-      case 'transfer_received':
-        return 'send';
-      case 'trade':
-        return 'swap-horiz';
-      default:
-        return 'help-outline';
-    }
-  };
+  const cfg    = TYPE_CONFIG[transaction.type]   || { icon: 'help', label: transaction.type, gradient: ['#64748B','#94A3B8'] };
+  const status = STATUS_CONFIG[transaction.status] || { color: Colors.textMuted, label: transaction.status };
+  const isIn   = ['deposit','transfer_received'].includes(transaction.type);
 
-  const getGradient = () => {
-    switch (transaction.type) {
-      case 'deposit':
-        return ['#10B981', '#34D399'];
-      case 'withdrawal':
-        return ['#EF4444', '#F87171'];
-      case 'transfer':
-      case 'transfer_sent':
-      case 'transfer_received':
-        return ['#3B82F6', '#60A5FA'];
-      default:
-        return ['#71717A', '#A1A1AA'];
-    }
-  };
-
-  const getStatusColor = () => {
-    switch (transaction.status) {
-      case 'completed':
-        return Colors.success;
-      case 'pending':
-        return Colors.warning;
-      case 'failed':
-        return Colors.error;
-      default:
-        return Colors.textMuted;
-    }
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    
-    if (hours < 1) return 'Just now';
-    if (hours < 24) return `${hours}h ago`;
-    if (hours < 48) return 'Yesterday';
-    return date.toLocaleDateString();
-  };
-
-  const formatType = (type: string) => {
-    return type.replace('_', ' ').split(' ').map(word => 
-      word.charAt(0).toUpperCase() + word.slice(1)
-    ).join(' ');
+  const fmt = (ts: string) => {
+    const diff = Date.now() - new Date(ts).getTime();
+    const h = Math.floor(diff / 3600000);
+    if (h < 1) return 'Just now';
+    if (h < 24) return `${h}h ago`;
+    if (h < 48) return 'Yesterday';
+    return new Date(ts).toLocaleDateString();
   };
 
   return (
-    <View style={styles.container}>
-      {/* Gradient Border */}
+    <View style={styles.card}>
+      {/* Left accent */}
       <LinearGradient
-        colors={getGradient() as any}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
-        style={styles.gradientBorder}
+        colors={cfg.gradient as any}
+        start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }}
+        style={styles.accent}
       />
 
       {/* Icon */}
-      <View style={styles.iconWrapper}>
-        <LinearGradient
-          colors={getGradient() as any}
-          style={styles.iconGradient}
-        >
-          <MaterialIcons name={getIcon() as any} size={22} color="#FFF" />
+      <View style={styles.iconWrap}>
+        <LinearGradient colors={cfg.gradient as any} style={styles.iconGrad}>
+          <MaterialIcons name={cfg.icon as any} size={20} color="#FFF" />
         </LinearGradient>
       </View>
 
       {/* Details */}
       <View style={styles.details}>
-        <Text style={styles.type}>{formatType(transaction.type)}</Text>
-        <View style={styles.dateRow}>
-          <MaterialIcons name="schedule" size={12} color={Colors.textMuted} />
-          <Text style={styles.date}>{formatDate(transaction.created_at)}</Text>
+        <Text style={styles.type}>{cfg.label}</Text>
+        <View style={styles.metaRow}>
+          <MaterialIcons name="schedule" size={11} color={Colors.textMuted} />
+          <Text style={styles.date}>{fmt(transaction.created_at)}</Text>
         </View>
       </View>
 
-      {/* Amount & Status */}
-      <View style={styles.amountContainer}>
-        <Text style={styles.amount}>
-          {transaction.type === 'deposit' ? '+' : '-'}${Math.abs(transaction.amount).toFixed(2)}
+      {/* Amount + Status */}
+      <View style={styles.right}>
+        <Text style={[styles.amount, { color: isIn ? Colors.success : Colors.error }]}>
+          {isIn ? '+' : '-'}${Math.abs(transaction.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
         </Text>
-        <View style={[styles.statusBadge, { backgroundColor: `${getStatusColor()}20` }]}>
-          <View style={[styles.statusDot, { backgroundColor: getStatusColor() }]} />
-          <Text style={[styles.status, { color: getStatusColor() }]}>
-            {transaction.status}
-          </Text>
+        <View style={[styles.statusBadge, { backgroundColor: `${status.color}20` }]}>
+          <View style={[styles.statusDot, { backgroundColor: status.color }]} />
+          <Text style={[styles.statusText, { color: status.color }]}>{status.label}</Text>
         </View>
       </View>
     </View>
@@ -122,83 +79,25 @@ export const TransactionItem: React.FC<TransactionItemProps> = ({ transaction })
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.surfaceElevated,
-    borderRadius: BorderRadius.lg,
-    padding: isSmallScreen ? Spacing.sm : Spacing.md,
-    marginBottom: Spacing.sm,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    position: 'relative',
+  card: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: Colors.surfaceElevated, borderRadius: BorderRadius.lg,
+    borderWidth: 1, borderColor: Colors.border,
     overflow: 'hidden',
   },
-  gradientBorder: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: 3,
-  },
-  iconWrapper: {
-    marginLeft: Spacing.sm,
-    marginRight: Spacing.md,
-    borderRadius: BorderRadius.md,
-    overflow: 'hidden',
-  },
-  iconGradient: {
-    width: isSmallScreen ? 44 : 48,
-    height: isSmallScreen ? 44 : 48,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  details: {
-    flex: 1,
-  },
-  type: {
-    ...Typography.bodyBold,
-    color: Colors.text,
-    marginBottom: 4,
-    fontSize: isSmallScreen ? 14 : 16,
-  },
-  dateRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  date: {
-    ...Typography.caption,
-    color: Colors.textSecondary,
-    fontSize: isSmallScreen ? 11 : 12,
-  },
-  amountContainer: {
-    alignItems: 'flex-end',
-    gap: 4,
-  },
-  amount: {
-    ...Typography.bodyBold,
-    fontSize: isSmallScreen ? 15 : 17,
-    fontWeight: '700',
-    color: Colors.text,
-  },
-  statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.xs,
-    paddingVertical: 2,
-    borderRadius: BorderRadius.xs,
-    gap: 3,
-  },
-  statusDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
-  },
-  status: {
-    ...Typography.caption,
-    fontWeight: '700',
-    textTransform: 'capitalize',
-    fontSize: isSmallScreen ? 10 : 11,
-  },
+  accent: { width: 3, alignSelf: 'stretch' },
+
+  iconWrap: { borderRadius: BorderRadius.md, overflow: 'hidden', marginLeft: Spacing.sm, marginRight: Spacing.md, marginVertical: Spacing.sm },
+  iconGrad: { width: isSmall ? 40 : 46, height: isSmall ? 40 : 46, alignItems: 'center', justifyContent: 'center' },
+
+  details: { flex: 1, paddingVertical: Spacing.sm },
+  type:    { ...Typography.captionBold, color: Colors.text, fontWeight: '700', fontSize: isSmall ? 13 : 15 },
+  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 3 },
+  date:    { ...Typography.micro, color: Colors.textMuted },
+
+  right:   { alignItems: 'flex-end', paddingRight: Spacing.md, gap: 5 },
+  amount:  { ...Typography.captionBold, fontWeight: '700', fontSize: isSmall ? 14 : 16 },
+  statusBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 7, paddingVertical: 3, borderRadius: BorderRadius.xs, gap: 4 },
+  statusDot:   { width: 5, height: 5, borderRadius: 3 },
+  statusText:  { ...Typography.micro, fontWeight: '700', textTransform: 'capitalize', fontSize: isSmall ? 9 : 10 },
 });
