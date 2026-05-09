@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TextInput,
   Pressable, Dimensions,
@@ -32,25 +32,46 @@ export default function MarketsScreen() {
 
   const loading = !Array.isArray(prices) || prices.length === 0;
 
-  const filtered = Array.isArray(prices) ? prices
-    .filter(p => {
-      const q = query.toLowerCase();
-      if (q && !p.name.toLowerCase().includes(q) && !p.symbol.toLowerCase().includes(q)) return false;
-      if (filter === 'top')     return prices.indexOf(p) < 10;
-      if (filter === 'gainers') return parseFloat(p.changePercent24Hr || '0') > 0;
-      if (filter === 'losers')  return parseFloat(p.changePercent24Hr || '0') < 0;
-      return true;
-    })
-    .sort((a, b) => {
-      if (sort === 'price')  return parseFloat(b.priceUsd)  - parseFloat(a.priceUsd);
-      if (sort === 'change') return parseFloat(b.changePercent24Hr || '0') - parseFloat(a.changePercent24Hr || '0');
-      return a.name.localeCompare(b.name);
-    })
-  : [];
+  // Memoize filtered and sorted data to prevent recalculation on every render
+  const filtered = useMemo(() => {
+    if (!Array.isArray(prices)) return [];
+    
+    const q = query.toLowerCase();
+    
+    return prices
+      .filter(p => {
+        if (q && !p.name.toLowerCase().includes(q) && !p.symbol.toLowerCase().includes(q)) return false;
+        if (filter === 'top')     return prices.indexOf(p) < 10;
+        if (filter === 'gainers') return parseFloat(p.changePercent24Hr || '0') > 0;
+        if (filter === 'losers')  return parseFloat(p.changePercent24Hr || '0') < 0;
+        return true;
+      })
+      .sort((a, b) => {
+        if (sort === 'price')  return parseFloat(b.priceUsd)  - parseFloat(a.priceUsd);
+        if (sort === 'change') return parseFloat(b.changePercent24Hr || '0') - parseFloat(a.changePercent24Hr || '0');
+        return a.name.localeCompare(b.name);
+      });
+  }, [prices, query, sort, filter]);
 
-  const gainCount = Array.isArray(prices)
-    ? prices.filter(p => parseFloat(p.changePercent24Hr || '0') > 0).length : 0;
-  const loseCount = Array.isArray(prices) ? prices.length - gainCount : 0;
+  // Memoize sentiment counts
+  const { gainCount, loseCount, totalCount } = useMemo(() => {
+    if (!Array.isArray(prices)) return { gainCount: 0, loseCount: 0, totalCount: 0 };
+    const gainCount = prices.filter(p => parseFloat(p.changePercent24Hr || '0') > 0).length;
+    return {
+      gainCount,
+      loseCount: prices.length - gainCount,
+      totalCount: prices.length,
+    };
+  }, [prices]);
+
+  // Memoize search handler
+  const handleSearchChange = useCallback((text: string) => {
+    setQuery(text);
+  }, []);
+
+  const handleClearSearch = useCallback(() => {
+    setQuery('');
+  }, []);
 
   return (
     <View style={styles.root}>
@@ -86,7 +107,7 @@ export default function MarketsScreen() {
             <View style={styles.sentimentDivider} />
             <View style={styles.sentimentItem}>
               <MaterialIcons name="show-chart" size={16} color={Colors.primary} />
-              <Text style={[styles.sentimentCount, { color: Colors.primary }]}>{Array.isArray(prices) ? prices.length : 0}</Text>
+              <Text style={[styles.sentimentCount, { color: Colors.primary }]}>{totalCount}</Text>
               <Text style={styles.sentimentLabel}>Listed</Text>
             </View>
           </View>
@@ -101,10 +122,10 @@ export default function MarketsScreen() {
               placeholder="Search coins..."
               placeholderTextColor={Colors.textMuted}
               value={query}
-              onChangeText={setQuery}
+              onChangeText={handleSearchChange}
             />
             {query.length > 0 && (
-              <Pressable onPress={() => setQuery('')}>
+              <Pressable onPress={handleClearSearch}>
                 <MaterialIcons name="close" size={20} color={Colors.textMuted} />
               </Pressable>
             )}
@@ -151,12 +172,12 @@ export default function MarketsScreen() {
         ) : (
           <FlatList
             data={filtered}
-            keyExtractor={i => i.symbol}
-            renderItem={({ item, index }) => (
+            keyExtractor={useCallback((item) => item.symbol, [])}
+            renderItem={useCallback(({ item, index }) => (
               <Animated.View entering={FadeInDown.delay(index * 30).duration(200)}>
                 <PriceCard price={item} />
               </Animated.View>
-            )}
+            ), [])}
             contentContainerStyle={styles.listPad}
             showsVerticalScrollIndicator={false}
             ListEmptyComponent={

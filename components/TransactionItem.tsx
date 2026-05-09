@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -25,19 +25,38 @@ const STATUS_CONFIG: Record<string, { color: string; label: string }> = {
 
 interface TransactionItemProps { transaction: Transaction }
 
-export const TransactionItem: React.FC<TransactionItemProps> = ({ transaction }) => {
-  const cfg    = TYPE_CONFIG[transaction.type]   || { icon: 'help', label: transaction.type, gradient: ['#64748B','#94A3B8'] };
-  const status = STATUS_CONFIG[transaction.status] || { color: Colors.textMuted, label: transaction.status };
-  const isIn   = ['deposit','transfer_received'].includes(transaction.type);
-
-  const fmt = (ts: string) => {
+export const TransactionItem: React.FC<TransactionItemProps> = React.memo(({ transaction }) => {
+  // Memoize configuration lookups
+  const cfg = useMemo(() => 
+    TYPE_CONFIG[transaction.type] || { icon: 'help', label: transaction.type, gradient: ['#64748B','#94A3B8'] }
+  , [transaction.type]);
+  
+  const status = useMemo(() => 
+    STATUS_CONFIG[transaction.status] || { color: Colors.textMuted, label: transaction.status }
+  , [transaction.status]);
+  
+  const isIn = useMemo(() => 
+    ['deposit','transfer_received'].includes(transaction.type)
+  , [transaction.type]);
+  
+  // Memoize date formatting function
+  const fmt = useCallback((ts: string) => {
     const diff = Date.now() - new Date(ts).getTime();
     const h = Math.floor(diff / 3600000);
     if (h < 1) return 'Just now';
     if (h < 24) return `${h}h ago`;
     if (h < 48) return 'Yesterday';
     return new Date(ts).toLocaleDateString();
-  };
+  }, []);
+  
+  // Memoize formatted amount
+  const formattedAmount = useMemo(() => {
+    const amount = Math.abs(transaction.amount).toLocaleString(undefined, { 
+      minimumFractionDigits: 2, 
+      maximumFractionDigits: 2 
+    });
+    return `${isIn ? '+' : '-'}$${amount}`;
+  }, [transaction.amount, isIn]);
 
   return (
     <View style={styles.card}>
@@ -67,7 +86,7 @@ export const TransactionItem: React.FC<TransactionItemProps> = ({ transaction })
       {/* Amount + Status */}
       <View style={styles.right}>
         <Text style={[styles.amount, { color: isIn ? Colors.success : Colors.error }]}>
-          {isIn ? '+' : '-'}${Math.abs(transaction.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          {formattedAmount}
         </Text>
         <View style={[styles.statusBadge, { backgroundColor: `${status.color}20` }]}>
           <View style={[styles.statusDot, { backgroundColor: status.color }]} />
@@ -76,7 +95,9 @@ export const TransactionItem: React.FC<TransactionItemProps> = ({ transaction })
       </View>
     </View>
   );
-};
+});
+
+TransactionItem.displayName = 'TransactionItem';
 
 const styles = StyleSheet.create({
   card: {
