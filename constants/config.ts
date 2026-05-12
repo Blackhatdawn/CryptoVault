@@ -3,8 +3,8 @@
 
 export const API_CONFIG = {
   // Backend URLs
-  BASE_URL: process.env.EXPO_PUBLIC_API_URL || 'https://cryptovault-api.onrender.com',
-  WS_URL: process.env.EXPO_PUBLIC_WS_URL || 'wss://cryptovault-api.onrender.com',
+  BASE_URL: process.env.EXPO_PUBLIC_API_URL || 'https://api.cryptovaultpro.finance',
+  WS_URL: process.env.EXPO_PUBLIC_WS_URL || 'wss://api.cryptovaultpro.finance',
   SOCKET_IO_PATH: process.env.EXPO_PUBLIC_SOCKET_IO_PATH || '/socket.io/',
   
   // Timeouts
