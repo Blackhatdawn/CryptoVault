@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import jwt from 'jsonwebtoken';
 import { authMiddleware, AuthRequest } from '../middleware/auth.js';
 import {
   generateTokens,
@@ -77,12 +78,10 @@ router.post('/refresh', (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Refresh token required' });
     }
 
-    const decoded = require('jsonwebtoken').verify(
-      refresh_token,
-      process.env.JWT_REFRESH_SECRET || 'your_refresh_secret_key'
-    );
+    const refreshSecret = (process.env.JWT_REFRESH_SECRET || 'your_refresh_secret_key') as string;
+    const decoded = jwt.verify(refresh_token, refreshSecret);
 
-    const { access_token, refresh_token: newRefreshToken } = generateTokens(decoded.userId);
+    const { access_token, refresh_token: newRefreshToken } = generateTokens((decoded as any).userId);
 
     res.json({
       access_token,

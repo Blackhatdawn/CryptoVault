@@ -27,7 +27,7 @@ router.get('/', (req: any, res: Response) => {
 });
 
 // Get crypto prices
-router.get('/prices', async (req: Response) => {
+router.get('/prices', async (req: any, res: Response) => {
   try {
     // Mock prices - in production, fetch from CoinGecko
     const prices = {
