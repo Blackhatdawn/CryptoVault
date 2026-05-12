@@ -67,3 +67,6 @@ htmlcov/
 .nyc_output
 coverage/
 ```
+
+#Ignore vscode AI rules
+.github/instructions/codacy.instructions.md

@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
-import { API_CONFIG } from '@/constants/config';
+import { API_CONFIG, API_ENDPOINTS } from '@/constants/config';
 import * as SecureStore from 'expo-secure-store';
 import type {
   User,
@@ -22,8 +22,8 @@ class ApiClient {
 
   constructor() {
     this.client = axios.create({
-      baseURL: API_CONFIG.baseURL,
-      timeout: API_CONFIG.timeout,
+      baseURL: API_CONFIG.BASE_URL,
+      timeout: API_CONFIG.TIMEOUT,
       headers: {
         'Content-Type': 'application/json',
       },
@@ -55,7 +55,7 @@ class ApiClient {
             const refreshToken = await SecureStore.getItemAsync('refresh_token');
             if (refreshToken) {
               const response = await this.client.post<AuthTokens>(
-                API_CONFIG.endpoints.auth.refresh,
+                API_ENDPOINTS.REFRESH,
                 { refresh_token: refreshToken }
               );
 
@@ -81,48 +81,48 @@ class ApiClient {
 
   // Auth API
   async login(credentials: LoginCredentials): Promise<{ user: User; tokens: AuthTokens }> {
-    const response = await this.client.post(API_CONFIG.endpoints.auth.login, credentials);
+    const response = await this.client.post(API_ENDPOINTS.LOGIN, credentials);
     return response.data;
   }
 
   async signup(data: SignupData): Promise<{ user: User; tokens: AuthTokens }> {
-    const response = await this.client.post(API_CONFIG.endpoints.auth.signup, data);
+    const response = await this.client.post(API_ENDPOINTS.SIGNUP, data);
     return response.data;
   }
 
   async logout(): Promise<void> {
-    await this.client.post(API_CONFIG.endpoints.auth.logout);
+    await this.client.post(API_ENDPOINTS.LOGOUT);
   }
 
   async getMe(): Promise<User> {
-    const response = await this.client.get(API_CONFIG.endpoints.auth.me);
+    const response = await this.client.get(API_ENDPOINTS.ME);
     return response.data;
   }
 
   // Wallet API
   async getBalance(): Promise<WalletBalance> {
-    const response = await this.client.get(API_CONFIG.endpoints.wallet.balance);
+    const response = await this.client.get(API_ENDPOINTS.BALANCE);
     return response.data;
   }
 
   async createDeposit(request: DepositRequest): Promise<DepositResponse> {
-    const response = await this.client.post(API_CONFIG.endpoints.wallet.deposit, request);
+    const response = await this.client.post(API_ENDPOINTS.DEPOSIT, request);
     return response.data;
   }
 
   async createWithdrawal(request: WithdrawRequest): Promise<ApiResponse<any>> {
-    const response = await this.client.post(API_CONFIG.endpoints.wallet.withdraw, request);
+    const response = await this.client.post(API_ENDPOINTS.WITHDRAW, request);
     return response.data;
   }
 
   async createTransfer(request: TransferRequest): Promise<ApiResponse<Transaction>> {
-    const response = await this.client.post(API_CONFIG.endpoints.wallet.transfer, request);
+    const response = await this.client.post(API_ENDPOINTS.TRANSFER, request);
     return response.data;
   }
 
   // Transactions API
   async getTransactions(page = 1, limit = 20): Promise<PaginatedResponse<Transaction>> {
-    const response = await this.client.get(API_CONFIG.endpoints.transactions, {
+    const response = await this.client.get(API_ENDPOINTS.TRANSACTIONS, {
       params: { page, limit },
     });
     return response.data;
@@ -130,12 +130,12 @@ class ApiClient {
 
   // Prices API
   async getPrices(): Promise<CryptoPrice[]> {
-    const response = await this.client.get(API_CONFIG.endpoints.prices);
+    const response = await this.client.get(API_ENDPOINTS.PRICES);
     return response.data;
   }
 
   async getCryptoList(): Promise<CryptoPrice[]> {
-    const response = await this.client.get(API_CONFIG.endpoints.crypto);
+    const response = await this.client.get(API_ENDPOINTS.CRYPTO_LIST);
     return response.data;
   }
 
