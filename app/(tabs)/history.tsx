@@ -1,55 +1,94 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
-  View, Text, StyleSheet, FlatList, RefreshControl,
-  Pressable, Dimensions,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { MaterialIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { FadeInDown } from 'react-native-reanimated';
-import { useTransactions } from '@/hooks/useTransactions';
-import { TransactionItem } from '@/components/TransactionItem';
-import { SkeletonLoader } from '@/components/SkeletonLoader';
-import { Colors, Typography, Spacing, BorderRadius, Shadows } from '@/constants/theme';
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  RefreshControl,
+  Pressable,
+  Dimensions,
+  ActivityIndicator,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { MaterialIcons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import Animated, { FadeInDown } from "react-native-reanimated";
+import { useTransactions } from "@/hooks/useTransactions";
+import { TransactionItem } from "@/components/TransactionItem";
+import { SkeletonLoader } from "@/components/SkeletonLoader";
+import {
+  Colors,
+  Typography,
+  Spacing,
+  BorderRadius,
+  Shadows,
+} from "@/constants/theme";
 
-const { width } = Dimensions.get('window');
+const { width } = Dimensions.get("window");
 const isSmall = width < 375;
 
 const FILTER_TABS = [
-  { key: 'all',       label: 'All',      icon: 'list' },
-  { key: 'deposit',   label: 'Deposits', icon: 'arrow-downward' },
-  { key: 'withdrawal',label: 'Withdrawals',icon: 'arrow-upward' },
-  { key: 'transfer',  label: 'Transfers',icon: 'swap-horiz' },
+  { key: "all", label: "All", icon: "list" },
+  { key: "deposit", label: "Deposits", icon: "arrow-downward" },
+  { key: "withdrawal", label: "Withdrawals", icon: "arrow-upward" },
+  { key: "transfer", label: "Transfers", icon: "swap-horiz" },
 ];
 
 export default function HistoryScreen() {
-  const { transactions, isLoading, isRefreshing, refresh } = useTransactions();
-  const [activeFilter, setActiveFilter] = useState('all');
+  const { transactions, isLoading, isRefreshing, refresh, loadMore, hasMore } =
+    useTransactions();
+  const [activeFilter, setActiveFilter] = useState("all");
 
   const filtered = transactions
-    ? transactions.filter(t => activeFilter === 'all' || t.type === activeFilter || t.type.startsWith(activeFilter))
+    ? transactions.filter(
+        (t) =>
+          activeFilter === "all" ||
+          t.type === activeFilter ||
+          t.type.startsWith(activeFilter),
+      )
     : [];
 
-  const totalIn  = transactions?.filter(t => t.type === 'deposit').reduce((s, t) => s + t.amount, 0) || 0;
-  const totalOut = transactions?.filter(t => t.type !== 'deposit').reduce((s, t) => s + t.amount, 0) || 0;
+  const totalIn =
+    transactions
+      ?.filter((t) => t.type === "deposit")
+      .reduce((s, t) => s + t.amount, 0) || 0;
+  const totalOut =
+    transactions
+      ?.filter((t) => t.type !== "deposit")
+      .reduce((s, t) => s + t.amount, 0) || 0;
 
   return (
     <View style={styles.root}>
-      <LinearGradient colors={[Colors.background, Colors.surface]} style={StyleSheet.absoluteFill} />
-      <SafeAreaView style={styles.safe} edges={['top']}>
-
+      <LinearGradient
+        colors={[Colors.background, Colors.surface]}
+        style={StyleSheet.absoluteFill}
+      />
+      <SafeAreaView style={styles.safe} edges={["top"]}>
         {/* ─── Header ────────────────────────────────────────────────── */}
-        <Animated.View entering={FadeInDown.duration(300)} style={styles.header}>
+        <Animated.View
+          entering={FadeInDown.duration(300)}
+          style={styles.header}
+        >
           <Text style={styles.title}>History</Text>
           <Text style={styles.subtitle}>All your crypto activities</Text>
         </Animated.View>
 
         {/* ─── Summary Cards ────────────────────────────────────────── */}
-        <Animated.View entering={FadeInDown.delay(60).duration(300)} style={styles.summaryRow}>
+        <Animated.View
+          entering={FadeInDown.delay(60).duration(300)}
+          style={styles.summaryRow}
+        >
           <View style={styles.summaryCard}>
-            <LinearGradient colors={[Colors.successGlow2, 'transparent']} style={styles.summaryGrad}>
+            <LinearGradient
+              colors={[Colors.successGlow2, "transparent"]}
+              style={styles.summaryGrad}
+            >
               <View style={styles.summaryIcon}>
-                <MaterialIcons name="arrow-downward" size={18} color={Colors.success} />
+                <MaterialIcons
+                  name="arrow-downward"
+                  size={18}
+                  color={Colors.success}
+                />
               </View>
               <Text style={styles.summaryLabel}>Total In</Text>
               <Text style={[styles.summaryValue, { color: Colors.success }]}>
@@ -58,9 +97,21 @@ export default function HistoryScreen() {
             </LinearGradient>
           </View>
           <View style={styles.summaryCard}>
-            <LinearGradient colors={[Colors.errorGlow2, 'transparent']} style={styles.summaryGrad}>
-              <View style={[styles.summaryIcon, { backgroundColor: Colors.errorGlow }]}>
-                <MaterialIcons name="arrow-upward" size={18} color={Colors.error} />
+            <LinearGradient
+              colors={[Colors.errorGlow2, "transparent"]}
+              style={styles.summaryGrad}
+            >
+              <View
+                style={[
+                  styles.summaryIcon,
+                  { backgroundColor: Colors.errorGlow },
+                ]}
+              >
+                <MaterialIcons
+                  name="arrow-upward"
+                  size={18}
+                  color={Colors.error}
+                />
               </View>
               <Text style={styles.summaryLabel}>Total Out</Text>
               <Text style={[styles.summaryValue, { color: Colors.error }]}>
@@ -69,9 +120,21 @@ export default function HistoryScreen() {
             </LinearGradient>
           </View>
           <View style={styles.summaryCard}>
-            <LinearGradient colors={[Colors.primaryGlow2, 'transparent']} style={styles.summaryGrad}>
-              <View style={[styles.summaryIcon, { backgroundColor: Colors.primaryGlow }]}>
-                <MaterialIcons name="receipt-long" size={18} color={Colors.primary} />
+            <LinearGradient
+              colors={[Colors.primaryGlow2, "transparent"]}
+              style={styles.summaryGrad}
+            >
+              <View
+                style={[
+                  styles.summaryIcon,
+                  { backgroundColor: Colors.primaryGlow },
+                ]}
+              >
+                <MaterialIcons
+                  name="receipt-long"
+                  size={18}
+                  color={Colors.primary}
+                />
               </View>
               <Text style={styles.summaryLabel}>Total Txns</Text>
               <Text style={[styles.summaryValue, { color: Colors.primary }]}>
@@ -84,18 +147,31 @@ export default function HistoryScreen() {
         {/* ─── Filter Tabs ──────────────────────────────────────────── */}
         <Animated.View entering={FadeInDown.delay(100).duration(300)}>
           <View style={styles.filterRow}>
-            {FILTER_TABS.map(tab => (
-              <Pressable key={tab.key} onPress={() => setActiveFilter(tab.key)} style={styles.filterItem}>
+            {FILTER_TABS.map((tab) => (
+              <Pressable
+                key={tab.key}
+                onPress={() => setActiveFilter(tab.key)}
+                style={styles.filterItem}
+              >
                 <LinearGradient
-                  colors={activeFilter === tab.key ? ['#7C3AED','#4F46E5'] : ['transparent','transparent']}
+                  colors={
+                    activeFilter === tab.key
+                      ? ["#7C3AED", "#4F46E5"]
+                      : ["transparent", "transparent"]
+                  }
                   style={styles.filterGrad}
                 >
                   <MaterialIcons
                     name={tab.icon as any}
                     size={15}
-                    color={activeFilter === tab.key ? '#FFF' : Colors.textMuted}
+                    color={activeFilter === tab.key ? "#FFF" : Colors.textMuted}
                   />
-                  <Text style={[styles.filterText, activeFilter === tab.key && styles.filterTextActive]}>
+                  <Text
+                    style={[
+                      styles.filterText,
+                      activeFilter === tab.key && styles.filterTextActive,
+                    ]}
+                  >
                     {tab.label}
                   </Text>
                 </LinearGradient>
@@ -112,9 +188,11 @@ export default function HistoryScreen() {
         ) : (
           <FlatList
             data={filtered}
-            keyExtractor={item => item.id}
+            keyExtractor={(item) => item.id}
             renderItem={({ item, index }) => (
-              <Animated.View entering={FadeInDown.delay(index * 40).duration(200)}>
+              <Animated.View
+                entering={FadeInDown.delay(index * 40).duration(200)}
+              >
                 <TransactionItem transaction={item} />
               </Animated.View>
             )}
@@ -127,29 +205,65 @@ export default function HistoryScreen() {
                 tintColor={Colors.primary}
               />
             }
+            onEndReached={loadMore}
+            onEndReachedThreshold={0.3}
+            ListFooterComponent={
+              hasMore ? (
+                <View
+                  style={{ paddingVertical: Spacing.lg, alignItems: "center" }}
+                >
+                  <ActivityIndicator size="small" color={Colors.primary} />
+                </View>
+              ) : null
+            }
             ListEmptyComponent={
               <View style={styles.empty}>
                 <LinearGradient
-                  colors={['rgba(124,58,237,0.1)','rgba(79,70,229,0.04)']}
+                  colors={["rgba(124,58,237,0.1)", "rgba(79,70,229,0.04)"]}
                   style={styles.emptyIconWrap}
                 >
-                  <MaterialIcons name="receipt-long" size={56} color={Colors.textMuted} />
+                  <MaterialIcons
+                    name="receipt-long"
+                    size={56}
+                    color={Colors.textMuted}
+                  />
                 </LinearGradient>
                 <Text style={styles.emptyTitle}>No Transactions</Text>
                 <Text style={styles.emptyText}>
-                  {activeFilter !== 'all'
+                  {activeFilter !== "all"
                     ? `No ${activeFilter} transactions yet`
-                    : 'Your transaction history will appear here'}
+                    : "Your transaction history will appear here"}
                 </Text>
                 <View style={styles.emptyHints}>
                   {[
-                    { icon: 'account-balance-wallet', label: 'Deposit crypto to start', color: Colors.success },
-                    { icon: 'swap-horiz',             label: 'Transfer to other users',  color: Colors.info   },
-                    { icon: 'show-chart',             label: 'Trade crypto assets',       color: Colors.primary},
+                    {
+                      icon: "account-balance-wallet",
+                      label: "Deposit crypto to start",
+                      color: Colors.success,
+                    },
+                    {
+                      icon: "swap-horiz",
+                      label: "Transfer to other users",
+                      color: Colors.info,
+                    },
+                    {
+                      icon: "show-chart",
+                      label: "Trade crypto assets",
+                      color: Colors.primary,
+                    },
                   ].map((h, i) => (
                     <View key={i} style={styles.hintCard}>
-                      <View style={[styles.hintIcon, { backgroundColor: `${h.color}20` }]}>
-                        <MaterialIcons name={h.icon as any} size={18} color={h.color} />
+                      <View
+                        style={[
+                          styles.hintIcon,
+                          { backgroundColor: `${h.color}20` },
+                        ]}
+                      >
+                        <MaterialIcons
+                          name={h.icon as any}
+                          size={18}
+                          color={h.color}
+                        />
                       </View>
                       <Text style={styles.hintText}>{h.label}</Text>
                     </View>
@@ -169,59 +283,119 @@ const styles = StyleSheet.create({
   safe: { flex: 1 },
 
   header: {
-    paddingHorizontal: Spacing.lg, paddingTop: Spacing.md, paddingBottom: Spacing.sm,
-    borderBottomWidth: 1, borderBottomColor: Colors.border,
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
   },
-  title:    { ...Typography.h2, color: Colors.text, fontSize: isSmall ? 22 : 26 },
-  subtitle: { ...Typography.caption, color: Colors.textSecondary, marginTop: 2 },
+  title: { ...Typography.h2, color: Colors.text, fontSize: isSmall ? 22 : 26 },
+  subtitle: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
 
   summaryRow: {
-    flexDirection: 'row', paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md, gap: Spacing.sm,
+    flexDirection: "row",
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    gap: Spacing.sm,
   },
   summaryCard: {
-    flex: 1, borderRadius: BorderRadius.lg, overflow: 'hidden',
-    borderWidth: 1, borderColor: Colors.border,
+    flex: 1,
+    borderRadius: BorderRadius.lg,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
-  summaryGrad:  { padding: Spacing.sm },
-  summaryIcon:  {
-    width: 32, height: 32, borderRadius: 16,
-    backgroundColor: Colors.successGlow, alignItems: 'center',
-    justifyContent: 'center', marginBottom: 6,
+  summaryGrad: { padding: Spacing.sm },
+  summaryIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: Colors.successGlow,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 6,
   },
-  summaryLabel: { ...Typography.micro, color: Colors.textMuted, marginBottom: 3 },
-  summaryValue: { ...Typography.captionBold, fontWeight: '700' },
+  summaryLabel: {
+    ...Typography.micro,
+    color: Colors.textMuted,
+    marginBottom: 3,
+  },
+  summaryValue: { ...Typography.captionBold, fontWeight: "700" },
 
   filterRow: {
-    flexDirection: 'row', paddingHorizontal: Spacing.lg,
-    marginBottom: Spacing.sm, gap: Spacing.xs,
+    flexDirection: "row",
+    paddingHorizontal: Spacing.lg,
+    marginBottom: Spacing.sm,
+    gap: Spacing.xs,
   },
-  filterItem: { borderRadius: BorderRadius.full, overflow: 'hidden', flex: 1 },
+  filterItem: { borderRadius: BorderRadius.full, overflow: "hidden", flex: 1 },
   filterGrad: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    paddingVertical: 8, gap: 4, borderWidth: 1, borderColor: Colors.border,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 8,
+    gap: 4,
+    borderWidth: 1,
+    borderColor: Colors.border,
     borderRadius: BorderRadius.full,
   },
-  filterText: { ...Typography.micro, color: Colors.textMuted, fontSize: isSmall ? 9 : 10 },
-  filterTextActive: { color: '#FFF' },
+  filterText: {
+    ...Typography.micro,
+    color: Colors.textMuted,
+    fontSize: isSmall ? 9 : 10,
+  },
+  filterTextActive: { color: "#FFF" },
 
-  listPad: { padding: Spacing.lg, paddingBottom: Spacing.xxxl, gap: Spacing.xs },
+  listPad: {
+    padding: Spacing.lg,
+    paddingBottom: Spacing.xxxl,
+    gap: Spacing.xs,
+  },
 
-  empty: { alignItems: 'center', paddingVertical: Spacing.xl },
+  empty: { alignItems: "center", paddingVertical: Spacing.xl },
   emptyIconWrap: {
-    width: isSmall ? 100 : 120, height: isSmall ? 100 : 120,
+    width: isSmall ? 100 : 120,
+    height: isSmall ? 100 : 120,
     borderRadius: isSmall ? 50 : 60,
-    alignItems: 'center', justifyContent: 'center',
-    marginBottom: Spacing.lg, borderWidth: 1, borderColor: Colors.border,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: Spacing.lg,
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
-  emptyTitle: { ...Typography.h3, color: Colors.text, marginBottom: Spacing.xs },
-  emptyText:  { ...Typography.body, color: Colors.textSecondary, textAlign: 'center', marginBottom: Spacing.xl, maxWidth: 260 },
-  emptyHints: { width: '100%', gap: Spacing.sm },
+  emptyTitle: {
+    ...Typography.h3,
+    color: Colors.text,
+    marginBottom: Spacing.xs,
+  },
+  emptyText: {
+    ...Typography.body,
+    color: Colors.textSecondary,
+    textAlign: "center",
+    marginBottom: Spacing.xl,
+    maxWidth: 260,
+  },
+  emptyHints: { width: "100%", gap: Spacing.sm },
   hintCard: {
-    flexDirection: 'row', alignItems: 'center', gap: Spacing.sm,
-    backgroundColor: Colors.surfaceElevated, borderRadius: BorderRadius.md,
-    padding: Spacing.sm, borderWidth: 1, borderColor: Colors.border,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+    backgroundColor: Colors.surfaceElevated,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.sm,
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
-  hintIcon: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  hintIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   hintText: { ...Typography.caption, color: Colors.textSecondary },
 });

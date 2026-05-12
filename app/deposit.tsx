@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, Alert, Dimensions } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -54,8 +55,9 @@ export default function DepositScreen() {
     }
   };
 
-  const handleCopyAddress = (address: string) => {
-    Alert.alert('Copied', 'Payment address copied to clipboard');
+  const handleCopyAddress = async (address: string) => {
+    await Clipboard.setStringAsync(address);
+    Alert.alert('Copied!', 'Payment address copied to clipboard');
   };
 
   return (

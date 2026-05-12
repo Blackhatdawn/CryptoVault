@@ -1,13 +1,14 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { wsService } from '@/services/websocket';
+import { api } from '@/services/api';
 import type { CryptoPrice } from '@/types';
 
-// Debounce utility for high-frequency updates
+// Debounce utility — batches rapid WebSocket price updates into a single render
 const debounce = <T extends (...args: any[]) => any>(
   func: T,
   delay: number
 ): ((...args: Parameters<T>) => void) => {
-  let timeoutId: NodeJS.Timeout;
+  let timeoutId: ReturnType<typeof setTimeout>;
   return (...args: Parameters<T>) => {
     clearTimeout(timeoutId);
     timeoutId = setTimeout(() => func(...args), delay);
@@ -19,19 +20,19 @@ export const useLivePrices = (symbols: string[] = ['BTC', 'ETH', 'USDT', 'USDC',
   const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const symbolsRef = useRef(symbols);
-  
-  // Memoize the debounced price update handler
+
+  // Memoise the debounced WebSocket price-update handler
   const debouncedPriceUpdate = useMemo(
     () => debounce((data: any) => {
       if (data.prices && Array.isArray(data.prices)) {
-        const pricesMap: Record<string, CryptoPrice> = {};
-        data.prices.forEach((price: CryptoPrice) => {
-          pricesMap[price.symbol] = price;
+        setPrices((prev) => {
+          const next = { ...prev };
+          (data.prices as CryptoPrice[]).forEach((p) => { next[p.symbol] = p; });
+          return next;
         });
-        setPrices(pricesMap);
         setIsLoading(false);
       }
-    }, 100), // 100ms debounce to batch rapid updates
+    }, 100),
     []
   );
 
@@ -44,19 +45,35 @@ export const useLivePrices = (symbols: string[] = ['BTC', 'ETH', 'USDT', 'USDC',
   }, [symbols]);
 
   useEffect(() => {
-    // Connect to WebSocket
-    wsService.connect();
+    // ── Step 1: Fetch prices from REST API immediately ────────────────────────
+    // This means the Markets screen is populated right away without waiting
+    // for the WebSocket handshake (which can take a few seconds).
+    (async () => {
+      try {
+        const data = await api.getPrices();
+        if (Array.isArray(data) && data.length > 0) {
+          const map: Record<string, CryptoPrice> = {};
+          data.forEach((p) => { map[p.symbol] = p; });
+          setPrices(map);
+          setIsLoading(false);
+        }
+      } catch {
+        // If REST fails, the WebSocket will provide data once connected
+        console.warn('[useLivePrices] REST price fetch failed, waiting for WebSocket...');
+      }
+    })();
 
-    // Subscribe to events
+    // ── Step 2: Connect WebSocket for streaming updates ───────────────────────
+    // The backend broadcasts fresh CoinGecko data every 30 s.
+    // New clients receive cached data immediately on subscription (see backend).
+    wsService.connect();
     wsService.on('connection_status', handleConnectionStatus);
     wsService.on('price_update', debouncedPriceUpdate);
 
-    // Subscribe to price updates
     if (symbols.length > 0) {
       wsService.subscribeToPrices(symbols);
     }
 
-    // Cleanup
     return () => {
       wsService.off('connection_status', handleConnectionStatus);
       wsService.off('price_update', debouncedPriceUpdate);
@@ -64,7 +81,7 @@ export const useLivePrices = (symbols: string[] = ['BTC', 'ETH', 'USDT', 'USDC',
         wsService.unsubscribeFromPrices(symbolsRef.current);
       }
     };
-  }, []); // Remove symbols dependency to prevent re-subscription
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const getPriceChange = useCallback((symbol: string): number => {
     const price = prices[symbol];
@@ -76,7 +93,7 @@ export const useLivePrices = (symbols: string[] = ['BTC', 'ETH', 'USDT', 'USDC',
     return getPriceChange(symbol) >= 0;
   }, [getPriceChange]);
 
-  // Convert prices map to array for components - memoized
+  // Convert map → array for list components
   const pricesArray = useMemo(() => Object.values(prices), [prices]);
 
   return {

@@ -1,4 +1,3 @@
-```gitignore
 # Dependencies
 node_modules/
 
@@ -34,10 +33,11 @@ Thumbs.db
 # Logs
 *.log
 
-# Environment variables
+# Environment variables — MUST be kept secret, never commit
 .env
 .env.local
 .env.*
+!.env.example
 
 # Editor
 .vscode/
@@ -66,7 +66,6 @@ htmlcov/
 .mypy_cache/
 .nyc_output
 coverage/
-```
 
-#Ignore vscode AI rules
-.github/instructions/codacy.instructions.md
+# Expo
+.expo/

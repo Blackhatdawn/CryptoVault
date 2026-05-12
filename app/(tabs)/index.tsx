@@ -30,9 +30,10 @@ export default function WalletScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { balance, isLoading: walletLoading, refresh: refreshWallet } = useWallet();
-  const prices = useLivePrices();
+  const { prices } = useLivePrices();
   const [refreshing, setRefreshing] = useState(false);
   const [balanceHidden, setBalanceHidden] = useState(false);
+  const [hasNotifications] = useState(false);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -41,6 +42,17 @@ export default function WalletScreen() {
   }, [refreshWallet]);
 
   const topPrices = Array.isArray(prices) ? prices.slice(0, 5) : [];
+
+  const stripCoins = ['BTC', 'ETH', 'SOL'].map(sym => {
+    const p = Array.isArray(prices) ? prices.find((x: any) => x.symbol === sym) : null;
+    const pct = p ? parseFloat(p.changePercent24Hr || '0') : null;
+    return {
+      label: sym,
+      pct: pct !== null ? `${pct >= 0 ? '+' : ''}${pct.toFixed(2)}%` : '---',
+      pos: pct !== null ? pct >= 0 : true,
+      color: CryptoGradients[sym as keyof typeof CryptoGradients] || [Colors.primary, Colors.primaryMid],
+    };
+  });
 
   const formatBalance = (val: number) =>
     balanceHidden ? '••••••' : `$${val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -65,7 +77,7 @@ export default function WalletScreen() {
             <View style={styles.headerActions}>
               <Pressable onPress={() => router.push('/notifications')} style={styles.iconBtn}>
                 <MaterialIcons name="notifications-none" size={24} color={Colors.text} />
-                <View style={styles.notifDot} />
+                {hasNotifications && <View style={styles.notifDot} />}
               </Pressable>
               <Pressable onPress={() => router.push('/(tabs)/account')} style={styles.avatarBtn}>
                 <LinearGradient colors={['#7C3AED','#4F46E5']} style={styles.avatarGradient}>
@@ -101,8 +113,8 @@ export default function WalletScreen() {
                       </Text>
                     )}
                     <View style={styles.heroChange}>
-                      <MaterialIcons name="trending-up" size={14} color="rgba(255,255,255,0.9)" />
-                      <Text style={styles.heroChangeTxt}>+2.34% today</Text>
+                      <MaterialIcons name="account-balance-wallet" size={14} color="rgba(255,255,255,0.9)" />
+                      <Text style={styles.heroChangeTxt}>Portfolio</Text>
                     </View>
                   </View>
                   <Pressable style={styles.eyeBtn} onPress={() => setBalanceHidden(!balanceHidden)}>
@@ -130,7 +142,7 @@ export default function WalletScreen() {
                   <View style={styles.heroDivider} />
                   <View style={styles.heroStatItem}>
                     <Text style={styles.heroStatLabel}>P&L</Text>
-                    <Text style={[styles.heroStatValue, { color: '#34D399' }]}>+$128</Text>
+                    <Text style={[styles.heroStatValue, { color: Colors.textSecondary }]}>N/A</Text>
                   </View>
                 </View>
               </View>
@@ -157,11 +169,7 @@ export default function WalletScreen() {
           {/* ─── Portfolio Summary Strip ──────────────────────────────── */}
           <Animated.View entering={FadeInDown.delay(250).springify()}>
             <View style={styles.stripRow}>
-              {[
-                { label: 'BTC', pct: '+5.2%', pos: true, color: CryptoGradients.BTC },
-                { label: 'ETH', pct: '-1.4%', pos: false, color: CryptoGradients.ETH },
-                { label: 'SOL', pct: '+8.9%', pos: true, color: CryptoGradients.SOL },
-              ].map((c) => (
+              {stripCoins.map((c) => (
                 <View key={c.label} style={styles.stripCard}>
                   <LinearGradient colors={c.color as any} style={styles.stripDot} />
                   <Text style={styles.stripLabel}>{c.label}</Text>

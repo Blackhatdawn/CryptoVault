@@ -6,6 +6,7 @@ interface WalletContextType {
   balance: WalletBalance | null;
   isLoading: boolean;
   fetchBalance: () => Promise<void>;
+  refresh: () => Promise<void>;
   createDeposit: (request: DepositRequest) => Promise<{ success: boolean; data?: any; error?: string }>;
   createWithdrawal: (request: WithdrawRequest) => Promise<{ success: boolean; error?: string }>;
   createTransfer: (request: TransferRequest) => Promise<{ success: boolean; error?: string }>;
@@ -35,7 +36,7 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
       await fetchBalance(); // Refresh balance
       return { success: true, data };
     } catch (error: any) {
-      return { success: false, error: error.response?.data?.detail || 'Deposit failed' };
+      return { success: false, error: error.response?.data?.error || error.response?.data?.detail || 'Deposit failed' };
     }
   };
 
@@ -45,7 +46,7 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
       await fetchBalance(); // Refresh balance
       return { success: true };
     } catch (error: any) {
-      return { success: false, error: error.response?.data?.detail || 'Withdrawal failed' };
+      return { success: false, error: error.response?.data?.error || error.response?.data?.detail || 'Withdrawal failed' };
     }
   };
 
@@ -60,7 +61,7 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
       await fetchBalance(); // Refresh balance
       return { success: true };
     } catch (error: any) {
-      return { success: false, error: error.response?.data?.detail || 'Transfer failed' };
+      return { success: false, error: error.response?.data?.error || error.response?.data?.detail || 'Transfer failed' };
     }
   };
 
@@ -70,6 +71,7 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
         balance,
         isLoading,
         fetchBalance,
+        refresh: fetchBalance,
         createDeposit,
         createWithdrawal,
         createTransfer,

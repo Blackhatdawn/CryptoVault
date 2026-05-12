@@ -25,23 +25,20 @@ const FILTER_TABS = [
 ];
 
 export default function MarketsScreen() {
-  const prices = useLivePrices();
+  const { prices, isLoading: pricesLoading } = useLivePrices();
   const [query, setQuery]   = useState('');
   const [sort, setSort]     = useState<SortKey>('price');
   const [filter, setFilter] = useState('all');
 
-  const loading = !Array.isArray(prices) || prices.length === 0;
+  const loading = pricesLoading || prices.length === 0;
 
   // Memoize filtered and sorted data to prevent recalculation on every render
   const filtered = useMemo(() => {
-    if (!Array.isArray(prices)) return [];
-    
     const q = query.toLowerCase();
-    
     return prices
       .filter(p => {
         if (q && !p.name.toLowerCase().includes(q) && !p.symbol.toLowerCase().includes(q)) return false;
-        if (filter === 'top')     return prices.indexOf(p) < 10;
+        if (filter === 'top')     return prices.indexOf(p) < 10;  // top 10 by market cap
         if (filter === 'gainers') return parseFloat(p.changePercent24Hr || '0') > 0;
         if (filter === 'losers')  return parseFloat(p.changePercent24Hr || '0') < 0;
         return true;
@@ -55,13 +52,8 @@ export default function MarketsScreen() {
 
   // Memoize sentiment counts
   const { gainCount, loseCount, totalCount } = useMemo(() => {
-    if (!Array.isArray(prices)) return { gainCount: 0, loseCount: 0, totalCount: 0 };
     const gainCount = prices.filter(p => parseFloat(p.changePercent24Hr || '0') > 0).length;
-    return {
-      gainCount,
-      loseCount: prices.length - gainCount,
-      totalCount: prices.length,
-    };
+    return { gainCount, loseCount: prices.length - gainCount, totalCount: prices.length };
   }, [prices]);
 
   // Memoize search handler

@@ -142,9 +142,9 @@ export default function AccountScreen() {
           {/* ─── Quick Stats Row ─────────────────────────────────────── */}
           <Animated.View entering={FadeInDown.delay(130).springify()} style={styles.statsRow}>
             {[
-              { icon: 'swap-horiz',           label: 'Trades',       value: '24',      color: Colors.primary },
-              { icon: 'arrow-downward',        label: 'Deposits',     value: '$4.2K',   color: Colors.success },
-              { icon: 'trending-up',           label: 'P&L',          value: '+12.4%',  color: Colors.accent  },
+              { icon: 'swap-horiz',    label: 'Trades',   value: 'N/A', color: Colors.primary },
+              { icon: 'arrow-downward',label: 'Deposits', value: 'N/A', color: Colors.success },
+              { icon: 'trending-up',   label: 'P&L',      value: 'N/A', color: Colors.accent  },
             ].map((s, i) => (
               <View key={i} style={styles.statCard}>
                 <LinearGradient colors={[`${s.color}18`, 'transparent']} style={styles.statGrad}>

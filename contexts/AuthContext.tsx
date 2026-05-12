@@ -52,34 +52,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (credentials: LoginCredentials) => {
     try {
       const { user: userData, tokens } = await api.login(credentials);
-      
+
       await SecureStore.setItemAsync('access_token', tokens.access_token);
       await SecureStore.setItemAsync('refresh_token', tokens.refresh_token);
-      
-      // Store credentials for biometric login
-      if (biometricEnabled) {
-        await SecureStore.setItemAsync('stored_email', credentials.email);
-        await SecureStore.setItemAsync('stored_password', credentials.password);
-      }
-      
+
       setUser(userData);
       return { success: true };
     } catch (error: any) {
-      return { success: false, error: error.response?.data?.detail || 'Login failed' };
+      return { success: false, error: error.response?.data?.error || error.response?.data?.detail || 'Login failed' };
     }
   };
 
   const signup = async (data: SignupData) => {
     try {
       const { user: userData, tokens } = await api.signup(data);
-      
+
       await SecureStore.setItemAsync('access_token', tokens.access_token);
       await SecureStore.setItemAsync('refresh_token', tokens.refresh_token);
-      
+
       setUser(userData);
       return { success: true };
     } catch (error: any) {
-      return { success: false, error: error.response?.data?.detail || 'Signup failed' };
+      return { success: false, error: error.response?.data?.error || error.response?.data?.detail || 'Signup failed' };
     }
   };
 
@@ -108,13 +102,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
 
       if (result.success) {
-        const email = await SecureStore.getItemAsync('stored_email');
-        const password = await SecureStore.getItemAsync('stored_password');
-
-        if (email && password) {
-          return await login({ email, password });
+        // Re-use refresh token flow instead of storing raw passwords
+        const token = await SecureStore.getItemAsync('access_token');
+        if (token) {
+          try {
+            const userData = await api.getMe();
+            setUser(userData);
+            return { success: true };
+          } catch {
+            return { success: false, error: 'Session expired. Please log in with your password.' };
+          }
         }
-        return { success: false, error: 'No stored credentials' };
+        return { success: false, error: 'No active session found. Please log in with your password.' };
       }
 
       return { success: false, error: 'Biometric authentication failed' };
@@ -144,8 +143,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     } else {
       await SecureStore.setItemAsync('biometric_enabled', 'false');
-      await SecureStore.deleteItemAsync('stored_email');
-      await SecureStore.deleteItemAsync('stored_password');
       setBiometricEnabled(false);
     }
   };

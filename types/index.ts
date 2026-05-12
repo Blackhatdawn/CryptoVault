@@ -5,6 +5,7 @@ export interface User {
   name: string;
   created_at: string;
   email_verified: boolean;
+  kyc_verified?: boolean;
 }
 
 export interface AuthTokens {
@@ -26,8 +27,11 @@ export interface SignupData {
 
 // Wallet Types
 export interface WalletBalance {
-  user_id: string;
-  balance: number;
+  user_id?: string;
+  balance: number;        // total balance (used in transfer.tsx)
+  total_usd: number;      // total portfolio value (used in index.tsx, account.tsx)
+  available_usd: number;  // available for trading
+  locked_usd: number;     // locked in active orders
   currency: string;
   updated_at: string;
 }
@@ -87,11 +91,10 @@ export interface CryptoPrice {
   id: string;
   symbol: string;
   name: string;
-  price_usd: number;
-  change_24h: number;
-  changePercent24Hr?: string;
-  market_cap: number;
-  volume_24h: number;
+  priceUsd: string;           // was price_usd: number — now string to match CoinGecko/API
+  changePercent24Hr: string;  // was mixed — now consistent
+  marketCapUsd: string;
+  volumeUsd24Hr: string;
   icon?: string;
 }
 

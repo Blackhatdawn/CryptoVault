@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, Pressable, Dimensions, Animated } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, Pressable, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -40,8 +40,6 @@ const SLIDES = [
 export default function OnboardingScreen() {
   const router = useRouter();
   const [currentIndex, setCurrentIndex] = useState(0);
-  const scrollX = useRef(new Animated.Value(0)).current;
-
   const handleContinue = async () => {
     if (currentIndex < SLIDES.length - 1) {
       setCurrentIndex(currentIndex + 1);
@@ -84,7 +82,7 @@ export default function OnboardingScreen() {
             >
               <MaterialIcons name={currentSlide.icon as any} size={80} color="#FFF" />
             </LinearGradient>
-            
+
             {/* Animated glow rings */}
             <View style={[styles.glowRing, styles.glowRing1]} />
             <View style={[styles.glowRing, styles.glowRing2]} />
