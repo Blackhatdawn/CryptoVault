@@ -35,14 +35,24 @@ const app: Express = express();
 // Trust proxy headers (X-Forwarded-For) — needed for accurate IP-based rate limiting
 app.set("trust proxy", 1);
 const httpServer = createServer(app);
-const allowedOrigins = process.env.CORS_ORIGIN?.split(",") || [
-  "http://localhost:8081",
-  "http://localhost:19006",
-];
+
+// CORS: use explicit allowlist in production, open in dev
+// React Native doesn't enforce CORS, but web and browser clients do.
+const corsOrigin: string | string[] | boolean = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(",").map((o) => o.trim())
+  : process.env.NODE_ENV === "production"
+    ? true // allow all origins if CORS_ORIGIN not set — set it in Render for stricter control
+    : ["http://localhost:8081", "http://localhost:19006"];
+
+if (process.env.NODE_ENV === "production" && !process.env.CORS_ORIGIN) {
+  console.warn(
+    "⚠️  CORS_ORIGIN is not set — all origins are allowed. Set it in Render for stricter control.",
+  );
+}
 
 const io = new SocketIOServer(httpServer, {
   cors: {
-    origin: allowedOrigins,
+    origin: corsOrigin,
     methods: ["GET", "POST", "PUT", "DELETE"],
   },
   path: "/socket.io/",
@@ -55,7 +65,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(
   cors({
-    origin: allowedOrigins,
+    origin: corsOrigin,
     credentials: true,
   }),
 );

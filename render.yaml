@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: cryptovault-backend
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: node dist/index.js
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SUPABASE_URL
+        value: https://xssekmwtjtzdwobodnup.supabase.co
+      - key: SUPABASE_ANON_KEY
+        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhzc2VrbXd0anR6ZHdvYm9kbnVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1NzI1OTYsImV4cCI6MjA5MDE0ODU5Nn0.cvSzfo7dokNgVSoLMkOIUrXKu62uxhcIlSq2mYLj6jo
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false   # Set this manually in the Render dashboard — never commit the service role key
+      - key: CORS_ORIGIN
+        sync: false   # Set to your frontend domain e.g. https://your-app.com
