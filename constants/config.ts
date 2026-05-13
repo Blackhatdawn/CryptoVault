@@ -2,13 +2,15 @@
 // Reads from environment variables with fallbacks
 
 export const API_CONFIG = {
-  // Backend URLs
+  // Backend URLs — empty string means same-origin (proxied through port 5000)
   BASE_URL:
-    process.env.EXPO_PUBLIC_API_URL ||
-    "https://cryptovault-backend-mbkr.onrender.com",
+    process.env.EXPO_PUBLIC_API_URL !== undefined
+      ? process.env.EXPO_PUBLIC_API_URL
+      : "https://cryptovault-backend-mbkr.onrender.com",
   WS_URL:
-    process.env.EXPO_PUBLIC_WS_URL ||
-    "wss://cryptovault-backend-mbkr.onrender.com",
+    process.env.EXPO_PUBLIC_WS_URL !== undefined
+      ? process.env.EXPO_PUBLIC_WS_URL
+      : "wss://cryptovault-backend-mbkr.onrender.com",
   SOCKET_IO_PATH: process.env.EXPO_PUBLIC_SOCKET_IO_PATH || "/socket.io/",
 
   // Timeouts

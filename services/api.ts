@@ -1,6 +1,6 @@
 import axios, { AxiosInstance, AxiosError } from "axios";
 import { API_CONFIG, API_ENDPOINTS } from "@/constants/config";
-import * as SecureStore from "expo-secure-store";
+import { storage as SecureStore } from "@/utils/storage";
 import type {
   User,
   AuthTokens,

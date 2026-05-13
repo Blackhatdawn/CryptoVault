@@ -5,3 +5,59 @@ stack = "BEST_EFFORT_FALLBACK"
 
 [nix]
 channel = "stable-25_05"
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Backend API"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Start application"
+
+[[workflows.workflow]]
+name = "Backend API"
+author = "agent"
+
+[workflows.workflow.metadata]
+outputType = "console"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd backend && PORT=3000 NODE_ENV=development SUPABASE_URL=https://xssekmwtjtzdwobodnup.supabase.co SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhzc2VrbXd0anR6ZHdvYm9kbnVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1NzI1OTYsImV4cCI6MjA5MDE0ODU5Nn0.cvSzfo7dokNgVSoLMkOIUrXKu62uxhcIlSq2mYLj6jo SUPABASE_SERVICE_ROLE_KEY=$SUPABASE_SERVICE_ROLE_KEY node_modules/.bin/tsx src/index.ts"
+waitForPort = 3000
+
+[[workflows.workflow]]
+name = "Start application"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "bash start-frontend.sh"
+waitForPort = 5000
+
+[workflows.workflow.metadata]
+outputType = "webview"
+
+[[ports]]
+localPort = 3000
+externalPort = 3000
+
+[[ports]]
+localPort = 5000
+externalPort = 80
+
+[[ports]]
+localPort = 8081
+externalPort = 8081
+
+[deployment]
+deploymentTarget = "vm"
+run = ["bash", "-c", "cd backend && SUPABASE_SERVICE_ROLE_KEY=$SUPABASE_SERVICE_ROLE_KEY PORT=3000 NODE_ENV=production SUPABASE_URL=https://xssekmwtjtzdwobodnup.supabase.co SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhzc2VrbXd0anR6ZHdvYm9kbnVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1NzI1OTYsImV4cCI6MjA5MDE0ODU5Nn0.cvSzfo7dokNgVSoLMkOIUrXKu62uxhcIlSq2mYLj6jo node_modules/.bin/tsx src/index.ts & bash start-frontend.sh"]
