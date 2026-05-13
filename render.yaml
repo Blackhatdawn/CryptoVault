@@ -1,4 +1,5 @@
 services:
+  # ── Backend API (Node.js / Express + Socket.io) ────────────────────────────
   - type: web
     name: cryptovault-backend
     runtime: node
@@ -10,11 +11,22 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+
       - key: SUPABASE_URL
         value: https://xssekmwtjtzdwobodnup.supabase.co
+
       - key: SUPABASE_ANON_KEY
         value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhzc2VrbXd0anR6ZHdvYm9kbnVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1NzI1OTYsImV4cCI6MjA5MDE0ODU5Nn0.cvSzfo7dokNgVSoLMkOIUrXKu62uxhcIlSq2mYLj6jo
+
+      # ⚠ Set this in the Render dashboard — Dashboard → Environment → Add Secret
       - key: SUPABASE_SERVICE_ROLE_KEY
-        sync: false # Set this manually in the Render dashboard — never commit the service role key
+        sync: false
+
+      # ── CORS ────────────────────────────────────────────────────────────────
+      # Comma-separated allowed origins. In production mode (NODE_ENV=production)
+      # the backend already defaults to allowing ALL origins when this is unset,
+      # so you only need to set this if you want to restrict access.
+      # Example after deploying the frontend to Vercel:
+      #   CORS_ORIGIN=https://cryptovault.vercel.app,https://www.cryptovault.financial
       - key: CORS_ORIGIN
-        value: https://cryptovault-backend-mbkr.onrender.com # Update to your frontend domain when deploying the web version
+        value: "*"

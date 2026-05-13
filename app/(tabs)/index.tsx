@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, RefreshControl,
-  Pressable, Dimensions,
+  Pressable, useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -15,9 +15,6 @@ import { PriceCard } from '@/components/PriceCard';
 import { SkeletonLoader } from '@/components/SkeletonLoader';
 import { Colors, Typography, Spacing, BorderRadius, Shadows, CryptoGradients } from '@/constants/theme';
 
-const { width } = Dimensions.get('window');
-const isSmall = width < 375;
-
 const QUICK_ACTIONS = [
   { icon: 'add-circle', label: 'Deposit',  route: '/deposit',     gradient: ['#059669','#10B981'] as [string,string], glow: Colors.successGlow },
   { icon: 'remove-circle', label: 'Withdraw', route: '/withdraw',    gradient: ['#DC2626','#EF4444'] as [string,string], glow: Colors.errorGlow   },
@@ -28,6 +25,8 @@ const QUICK_ACTIONS = [
 export default function WalletScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const isSmall = width < 375;
   const { user } = useAuth();
   const { balance, isLoading: walletLoading, refresh: refreshWallet } = useWallet();
   const { prices } = useLivePrices();
@@ -108,7 +107,7 @@ export default function WalletScreen() {
                     {walletLoading ? (
                       <View style={styles.balanceSkeleton} />
                     ) : (
-                      <Text style={styles.heroBalance}>
+                      <Text style={[styles.heroBalance, { fontSize: isSmall ? 32 : 40 }]}>
                         {formatBalance(balance?.total_usd || 0)}
                       </Text>
                     )}
@@ -157,7 +156,7 @@ export default function WalletScreen() {
                   onPress={() => router.push(a.route as any)}
                   style={({ pressed }) => [styles.actionBtn, pressed && { opacity: 0.8, transform: [{ scale: 0.95 }] }]}
                 >
-                  <LinearGradient colors={a.gradient} style={styles.actionIconWrap}>
+                  <LinearGradient colors={a.gradient} style={[styles.actionIconWrap, isSmall && { width: 50, height: 50, borderRadius: 25 }]}>
                     <MaterialIcons name={a.icon as any} size={28} color="#FFF" />
                   </LinearGradient>
                   <Text style={styles.actionLabel}>{a.label}</Text>
@@ -269,7 +268,7 @@ const styles = StyleSheet.create({
   heroContent: { position: 'relative', zIndex: 1 },
   heroTop:     { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: Spacing.lg },
   heroLabel:   { fontSize: 13, color: 'rgba(255,255,255,0.75)', marginBottom: 6, fontWeight: '500' },
-  heroBalance: { fontSize: isSmall ? 34 : 40, fontWeight: '800', color: '#FFF', letterSpacing: -1.5 },
+  heroBalance: { fontSize: 40, fontWeight: '800', color: '#FFF', letterSpacing: -1.5 },
   balanceSkeleton: { width: 180, height: 44, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: BorderRadius.md, marginTop: 4 },
   heroChange: { flexDirection: 'row', alignItems: 'center', marginTop: 6, gap: 3 },
   heroChangeTxt: { fontSize: 12, color: 'rgba(255,255,255,0.8)', fontWeight: '600' },
@@ -291,8 +290,8 @@ const styles = StyleSheet.create({
   actionItem: { flex: 1 },
   actionBtn:  { alignItems: 'center' },
   actionIconWrap: {
-    width: isSmall ? 52 : 60, height: isSmall ? 52 : 60,
-    borderRadius: isSmall ? 26 : 30, alignItems: 'center', justifyContent: 'center',
+    width: 60, height: 60,
+    borderRadius: 30, alignItems: 'center', justifyContent: 'center',
     marginBottom: 8, ...Shadows.md,
   },
   actionLabel: { ...Typography.micro, color: Colors.textSecondary, fontWeight: '600', textAlign: 'center' },

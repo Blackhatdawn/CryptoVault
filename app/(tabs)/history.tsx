@@ -6,7 +6,7 @@ import {
   FlatList,
   RefreshControl,
   Pressable,
-  Dimensions,
+  useWindowDimensions,
   ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -24,9 +24,6 @@ import {
   Shadows,
 } from "@/constants/theme";
 
-const { width } = Dimensions.get("window");
-const isSmall = width < 375;
-
 const FILTER_TABS = [
   { key: "all", label: "All", icon: "list" },
   { key: "deposit", label: "Deposits", icon: "arrow-downward" },
@@ -35,6 +32,8 @@ const FILTER_TABS = [
 ];
 
 export default function HistoryScreen() {
+  const { width } = useWindowDimensions();
+  const isSmall = width < 375;
   const { transactions, isLoading, isRefreshing, refresh, loadMore, hasMore } =
     useTransactions();
   const [activeFilter, setActiveFilter] = useState("all");
@@ -289,7 +288,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
   },
-  title: { ...Typography.h2, color: Colors.text, fontSize: isSmall ? 22 : 26 },
+  title: { ...Typography.h2, color: Colors.text, fontSize: 26 },
   subtitle: {
     ...Typography.caption,
     color: Colors.textSecondary,
@@ -346,7 +345,7 @@ const styles = StyleSheet.create({
   filterText: {
     ...Typography.micro,
     color: Colors.textMuted,
-    fontSize: isSmall ? 9 : 10,
+    fontSize: 10,
   },
   filterTextActive: { color: "#FFF" },
 
@@ -358,9 +357,9 @@ const styles = StyleSheet.create({
 
   empty: { alignItems: "center", paddingVertical: Spacing.xl },
   emptyIconWrap: {
-    width: isSmall ? 100 : 120,
-    height: isSmall ? 100 : 120,
-    borderRadius: isSmall ? 50 : 60,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: Spacing.lg,

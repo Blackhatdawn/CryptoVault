@@ -24,16 +24,14 @@ function NavigationGuard() {
   const router = useRouter();
 
   useEffect(() => {
-    if (isLoading) return; // wait for the session check to finish
+    if (isLoading) return;
 
     const topSegment = segments[0] as string | undefined;
     const isPublicRoute = !topSegment || PUBLIC_ROUTES.has(topSegment);
 
     if (!isAuthenticated && !isPublicRoute) {
-      // Protected route accessed without a session — send to auth
       router.replace('/auth');
     } else if (isAuthenticated && (topSegment === 'auth' || topSegment === 'onboarding')) {
-      // Already logged in but landed on auth/onboarding — skip to app
       router.replace('/(tabs)');
     }
   }, [isAuthenticated, isLoading, segments]);

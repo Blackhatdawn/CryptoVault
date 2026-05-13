@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   View, Text, StyleSheet, ScrollView,
-  Pressable, Alert, Dimensions,
+  Pressable, Alert, useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -12,9 +12,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { useWallet } from '@/hooks/useWallet';
 import { Colors, Typography, Spacing, BorderRadius, Shadows } from '@/constants/theme';
 
-const { width } = Dimensions.get('window');
-const isSmall = width < 375;
-
 type MenuSection = {
   title: string;
   items: { icon: string; label: string; subtitle?: string; route?: string; action?: () => void; badge?: string; color?: string }[];
@@ -22,6 +19,8 @@ type MenuSection = {
 
 export default function AccountScreen() {
   const router = useRouter();
+  const { width } = useWindowDimensions();
+  const isSmall = width < 375;
   const { user, logout } = useAuth();
   const { balance } = useWallet();
 
@@ -219,11 +218,11 @@ const styles = StyleSheet.create({
   safe: { flex: 1 },
 
   header: { paddingHorizontal: Spacing.lg, paddingTop: Spacing.md, paddingBottom: Spacing.sm },
-  title:  { ...Typography.h2, color: Colors.text, fontSize: isSmall ? 22 : 26 },
+  title:  { ...Typography.h2, color: Colors.text, fontSize: 26 },
 
   heroWrap: { paddingHorizontal: Spacing.lg, marginBottom: Spacing.md },
   heroCard: {
-    borderRadius: BorderRadius.xl, padding: isSmall ? Spacing.lg : Spacing.xl,
+    borderRadius: BorderRadius.xl, padding: Spacing.xl,
     overflow: 'hidden', ...Shadows.xl,
   },
   deco: { position: 'absolute', borderRadius: 9999, backgroundColor: 'rgba(255,255,255,0.08)' },
@@ -231,20 +230,20 @@ const styles = StyleSheet.create({
 
   avatarWrap: { position: 'relative', marginBottom: Spacing.sm },
   avatar: {
-    width: isSmall ? 72 : 88, height: isSmall ? 72 : 88,
-    borderRadius: isSmall ? 36 : 44,
+    width: 88, height: 88,
+    borderRadius: 44,
     backgroundColor: 'rgba(255,255,255,0.2)',
     alignItems: 'center', justifyContent: 'center',
     borderWidth: 3, borderColor: 'rgba(255,255,255,0.3)',
   },
-  avatarLetter: { fontSize: isSmall ? 30 : 36, fontWeight: '800', color: '#FFF' },
+  avatarLetter: { fontSize: 36, fontWeight: '800', color: '#FFF' },
   verifiedBadge: {
     position: 'absolute', bottom: 0, right: 0,
     width: 24, height: 24, borderRadius: 12,
     backgroundColor: '#FFF', alignItems: 'center', justifyContent: 'center',
   },
-  userName:  { fontSize: isSmall ? 18 : 22, fontWeight: '700', color: '#FFF', marginBottom: 4 },
-  userEmail: { fontSize: isSmall ? 12 : 13, color: 'rgba(255,255,255,0.75)', marginBottom: Spacing.sm },
+  userName:  { fontSize: 22, fontWeight: '700', color: '#FFF', marginBottom: 4 },
+  userEmail: { fontSize: 13, color: 'rgba(255,255,255,0.75)', marginBottom: Spacing.sm },
   kycBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
     borderWidth: 1, borderRadius: BorderRadius.full,
@@ -259,7 +258,7 @@ const styles = StyleSheet.create({
   },
   balanceItem:  { flex: 1, alignItems: 'center' },
   balanceItemLabel: { fontSize: 11, color: 'rgba(255,255,255,0.65)', marginBottom: 4 },
-  balanceItemValue: { fontSize: isSmall ? 13 : 15, fontWeight: '700', color: '#FFF' },
+  balanceItemValue: { fontSize: 15, fontWeight: '700', color: '#FFF' },
   balanceDivider:   { width: 1, backgroundColor: 'rgba(255,255,255,0.2)', marginVertical: 4 },
 
   statsRow: { flexDirection: 'row', paddingHorizontal: Spacing.lg, marginBottom: Spacing.md, gap: Spacing.sm },
@@ -275,12 +274,12 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surfaceElevated, borderRadius: BorderRadius.lg,
     borderWidth: 1, borderColor: Colors.border, overflow: 'hidden',
   },
-  menuItem:       { flexDirection: 'row', alignItems: 'center', padding: isSmall ? Spacing.sm : Spacing.md },
+  menuItem:       { flexDirection: 'row', alignItems: 'center', padding: Spacing.md },
   menuItemBorder: { borderBottomWidth: 1, borderBottomColor: Colors.border },
   menuIconWrap:   { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', marginRight: Spacing.sm },
   menuText:       { flex: 1 },
-  menuLabel:      { ...Typography.bodyBold, color: Colors.text, fontSize: isSmall ? 14 : 16 },
-  menuSub:        { ...Typography.caption,  color: Colors.textMuted, marginTop: 2, fontSize: isSmall ? 11 : 12 },
+  menuLabel:      { ...Typography.bodyBold, color: Colors.text, fontSize: 16 },
+  menuSub:        { ...Typography.caption,  color: Colors.textMuted, marginTop: 2, fontSize: 12 },
   badge: {
     backgroundColor: Colors.primaryGlow, borderRadius: BorderRadius.full,
     paddingHorizontal: 8, paddingVertical: 2, marginRight: Spacing.xs,

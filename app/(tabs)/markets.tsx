@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TextInput,
-  Pressable, Dimensions,
+  Pressable, useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -11,9 +11,6 @@ import { useLivePrices } from '@/hooks/useLivePrices';
 import { PriceCard } from '@/components/PriceCard';
 import { SkeletonLoader } from '@/components/SkeletonLoader';
 import { Colors, Typography, Spacing, BorderRadius, Shadows } from '@/constants/theme';
-
-const { width } = Dimensions.get('window');
-const isSmall = width < 375;
 
 type SortKey = 'price' | 'change' | 'name';
 
@@ -25,6 +22,8 @@ const FILTER_TABS = [
 ];
 
 export default function MarketsScreen() {
+  const { width } = useWindowDimensions();
+  const isSmall = width < 375;
   const { prices, isLoading: pricesLoading } = useLivePrices();
   const [query, setQuery]   = useState('');
   const [sort, setSort]     = useState<SortKey>('price');
@@ -201,7 +200,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingHorizontal: Spacing.lg, paddingTop: Spacing.md, paddingBottom: Spacing.sm,
   },
-  title:    { ...Typography.h2, color: Colors.text, fontSize: isSmall ? 22 : 26 },
+  title:    { ...Typography.h2, color: Colors.text, fontSize: 26 },
   subtitle: { ...Typography.caption, color: Colors.textSecondary, marginTop: 2 },
   liveBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
@@ -226,10 +225,10 @@ const styles = StyleSheet.create({
   searchBar: {
     flexDirection: 'row', alignItems: 'center', gap: Spacing.sm,
     backgroundColor: Colors.surfaceElevated, borderRadius: BorderRadius.md,
-    paddingHorizontal: Spacing.md, height: isSmall ? 44 : 48,
+    paddingHorizontal: Spacing.md, height: 48,
     borderWidth: 1, borderColor: Colors.border,
   },
-  searchInput: { flex: 1, color: Colors.text, fontSize: isSmall ? 14 : 16 },
+  searchInput: { flex: 1, color: Colors.text, fontSize: 16 },
 
   filterRow: {
     flexDirection: 'row', paddingHorizontal: Spacing.lg,
