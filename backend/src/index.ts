@@ -142,9 +142,14 @@ setInterval(broadcastPrices, BROADCAST_INTERVAL_MS);
 app.use(errorHandler);
 
 httpServer.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📡 WebSocket available at ws://localhost:${PORT}`);
-  console.log(`🌍 CORS enabled for: ${process.env.CORS_ORIGIN || "*"}`);
+  const env = process.env.NODE_ENV ?? "development";
+  const cors =
+    process.env.CORS_ORIGIN ??
+    (env === "production" ? "* (all origins)" : "localhost only");
+  console.log(`🚀 CryptoVault backend running  [${env}]  port ${PORT}`);
+  console.log(`📡 WebSocket  : /socket.io/`);
+  console.log(`🌍 CORS       : ${cors}`);
+  console.log(`🗄️  Supabase  : ${process.env.SUPABASE_URL ?? "NOT SET"}`);
 });
 
 export default app;
