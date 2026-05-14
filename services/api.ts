@@ -229,6 +229,26 @@ class ApiClient {
     const response = await this.client.put("/api/notifications/read-all");
     return response.data;
   }
+
+  async getWalletStats(): Promise<{
+    trade_count: number;
+    deposit_total: number;
+    withdrawal_total: number;
+    pnl: number;
+    order_count: number;
+    buy_volume: number;
+    sell_volume: number;
+  }> {
+    const response = await this.client.get("/api/wallet/stats");
+    return response.data;
+  }
+
+  async exportTransactionsCsv(): Promise<string> {
+    const response = await this.client.get("/api/transactions/export", {
+      responseType: "text",
+    });
+    return response.data as string;
+  }
 }
 
 export const api = new ApiClient();

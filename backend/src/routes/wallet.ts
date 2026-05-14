@@ -299,4 +299,64 @@ router.post(
   },
 );
 
+// ─── GET /api/wallet/stats ────────────────────────────────────────────────────
+router.get(
+  "/stats",
+  authMiddleware,
+  async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const [{ data: txData }, { data: ordersData }] = await Promise.all([
+        supabase
+          .from("transactions")
+          .select("type, amount, status")
+          .eq("user_id", req.userId!),
+        supabase
+          .from("orders")
+          .select("id, status, total, side")
+          .eq("user_id", req.userId!),
+      ]);
+
+      const txs = txData ?? [];
+      const orders = ordersData ?? [];
+
+      const depositTotal = txs
+        .filter((t) => t.type === "deposit" && t.status === "completed")
+        .reduce((sum, t) => sum + Number(t.amount), 0);
+
+      const withdrawalTotal = txs
+        .filter(
+          (t) =>
+            t.type === "withdrawal" &&
+            t.status !== "failed" &&
+            t.status !== "cancelled",
+        )
+        .reduce((sum, t) => sum + Number(t.amount), 0);
+
+      const tradeCount = orders.filter((o) => o.status === "filled").length;
+
+      const buyTotal = orders
+        .filter((o) => o.side === "buy" && o.status === "filled" && o.total)
+        .reduce((sum, o) => sum + Number(o.total), 0);
+
+      const sellTotal = orders
+        .filter((o) => o.side === "sell" && o.status === "filled" && o.total)
+        .reduce((sum, o) => sum + Number(o.total), 0);
+
+      const pnl = sellTotal - buyTotal;
+
+      res.json({
+        trade_count: tradeCount,
+        deposit_total: depositTotal,
+        withdrawal_total: withdrawalTotal,
+        pnl,
+        order_count: orders.length,
+        buy_volume: buyTotal,
+        sell_volume: sellTotal,
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  },
+);
+
 export default router;

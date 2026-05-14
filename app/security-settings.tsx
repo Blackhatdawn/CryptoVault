@@ -196,7 +196,7 @@ export default function SecuritySettingsScreen() {
             <MaterialIcons name="chevron-right" size={24} color={Colors.textMuted} />
           </Pressable>
 
-          <Pressable style={styles.settingItem}>
+          <Pressable style={styles.settingItem} onPress={() => router.push('/change-password')}>
             <View style={styles.settingLeft}>
               <MaterialIcons name="vpn-key" size={24} color={Colors.textSecondary} />
               <View style={styles.settingText}>

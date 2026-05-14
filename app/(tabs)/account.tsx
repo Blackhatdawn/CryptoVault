@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView,
   Pressable, Alert, useWindowDimensions,
@@ -10,6 +10,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { useAuth } from '@/hooks/useAuth';
 import { useWallet } from '@/hooks/useWallet';
+import { api } from '@/services/api';
 import { Colors, Typography, Spacing, BorderRadius, Shadows } from '@/constants/theme';
 
 type MenuSection = {
@@ -24,6 +25,16 @@ export default function AccountScreen() {
   const { user, logout } = useAuth();
   const { balance } = useWallet();
 
+  const [walletStats, setWalletStats] = useState<{
+    trade_count: number; deposit_total: number; pnl: number;
+  } | null>(null);
+
+  useEffect(() => {
+    api.getWalletStats()
+      .then(s => setWalletStats(s))
+      .catch(() => {});
+  }, []);
+
   const handleLogout = () => {
     Alert.alert('Logout', 'Are you sure you want to logout?', [
       { text: 'Cancel', style: 'cancel' },
@@ -36,9 +47,9 @@ export default function AccountScreen() {
       title: 'Account Management',
       items: [
         { icon: 'person-outline',    label: 'Edit Profile',      subtitle: 'Update your personal info',   route: '/edit-profile',      color: Colors.primary },
-        { icon: 'verified-user',     label: 'KYC Verification',  subtitle: user?.kyc_verified ? 'Verified' : 'Complete to unlock features', color: user?.kyc_verified ? Colors.success : Colors.warning },
-        { icon: 'credit-card',       label: 'Payment Methods',   subtitle: 'Manage bank accounts & cards', color: Colors.info    },
-        { icon: 'description',       label: 'Statements',        subtitle: 'Download account statements',  color: Colors.accent  },
+        { icon: 'verified-user',     label: 'KYC Verification',  subtitle: user?.kyc_verified ? 'Verified ✓' : 'Complete to unlock features', route: '/kyc',             color: user?.kyc_verified ? Colors.success : Colors.warning },
+        { icon: 'credit-card',       label: 'Payment Methods',   subtitle: 'Manage bank accounts & cards',  route: '/payment-methods', color: Colors.info    },
+        { icon: 'description',       label: 'Statements',        subtitle: 'Download account statements',   route: '/statements',      color: Colors.accent  },
       ],
     },
     {
@@ -141,9 +152,26 @@ export default function AccountScreen() {
           {/* ─── Quick Stats Row ─────────────────────────────────────── */}
           <Animated.View entering={FadeInDown.delay(130).springify()} style={styles.statsRow}>
             {[
-              { icon: 'swap-horiz',    label: 'Trades',   value: 'N/A', color: Colors.primary },
-              { icon: 'arrow-downward',label: 'Deposits', value: 'N/A', color: Colors.success },
-              { icon: 'trending-up',   label: 'P&L',      value: 'N/A', color: Colors.accent  },
+              {
+                icon: 'swap-horiz',
+                label: 'Trades',
+                value: walletStats ? String(walletStats.trade_count) : '—',
+                color: Colors.primary,
+              },
+              {
+                icon: 'arrow-downward',
+                label: 'Deposits',
+                value: walletStats ? `$${walletStats.deposit_total.toFixed(0)}` : '—',
+                color: Colors.success,
+              },
+              {
+                icon: 'trending-up',
+                label: 'P&L',
+                value: walletStats
+                  ? `${walletStats.pnl >= 0 ? '+' : ''}$${Math.abs(walletStats.pnl).toFixed(2)}`
+                  : '—',
+                color: walletStats && walletStats.pnl < 0 ? Colors.error : Colors.accent,
+              },
             ].map((s, i) => (
               <View key={i} style={styles.statCard}>
                 <LinearGradient colors={[`${s.color}18`, 'transparent']} style={styles.statGrad}>

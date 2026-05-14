@@ -56,4 +56,51 @@ router.get(
   },
 );
 
+// ─── GET /api/transactions/export  (CSV download) ────────────────────────────
+router.get(
+  "/export",
+  authMiddleware,
+  async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const { data: items, error } = await supabase
+        .from("transactions")
+        .select("*")
+        .eq("user_id", req.userId!)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        res.status(500).json({ error: error.message });
+        return;
+      }
+
+      const escape = (v: string) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+
+      const header = ["Date", "Time", "Type", "Amount", "Currency", "Status", "Description"].join(",");
+      const rows = (items ?? []).map((tx) => {
+        const d = new Date(tx.created_at);
+        return [
+          d.toLocaleDateString("en-US"),
+          d.toLocaleTimeString("en-US", { hour12: false }),
+          tx.type,
+          Number(tx.amount).toFixed(2),
+          tx.currency ?? "USD",
+          tx.status,
+          escape(tx.description ?? ""),
+        ].join(",");
+      });
+
+      const csv = [header, ...rows].join("\n");
+
+      res.setHeader("Content-Type", "text/csv");
+      res.setHeader(
+        "Content-Disposition",
+        'attachment; filename="cryptovault-transactions.csv"',
+      );
+      res.send(csv);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  },
+);
+
 export default router;

@@ -12,6 +12,7 @@ import ordersRouter from "./routes/orders.js";
 import alertsRouter from "./routes/alerts.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { fetchPrices, getCachedPrices } from "./services/priceService.js";
+import { checkPriceAlerts } from "./services/alertChecker.js";
 
 dotenv.config();
 
@@ -137,6 +138,11 @@ setTimeout(broadcastPrices, 2_000);
 
 // Then repeat on the interval
 setInterval(broadcastPrices, BROADCAST_INTERVAL_MS);
+
+// ─── Price Alert Checker ──────────────────────────────────────────────────────
+// Run 15 seconds after startup (so prices are cached), then every 60 seconds
+setTimeout(checkPriceAlerts, 15_000);
+setInterval(checkPriceAlerts, 60_000);
 
 // Error handling
 app.use(errorHandler);

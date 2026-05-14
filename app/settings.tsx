@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, Pressable, Switch, Alert, Dimensions,
+  View, Text, StyleSheet, ScrollView, Pressable, Switch, Alert, useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -10,11 +10,10 @@ import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { useAuth } from '@/hooks/useAuth';
 import { Colors, Typography, Spacing, BorderRadius, Shadows } from '@/constants/theme';
 
-const { width } = Dimensions.get('window');
-const isSmall = width < 375;
-
 export default function SettingsScreen() {
   const router = useRouter();
+  const { width } = useWindowDimensions();
+  const isSmall = width < 375;
   const { user, logout, biometricEnabled, enableBiometric } = useAuth();
   const [loading, setLoading]   = useState(false);
   const [darkMode, setDarkMode] = useState(true);
@@ -193,26 +192,25 @@ const styles = StyleSheet.create({
   profileCard: { borderRadius: BorderRadius.xl, overflow: 'hidden', marginBottom: Spacing.xl, ...Shadows.lg },
   profileGrad: { flexDirection: 'row', alignItems: 'center', padding: Spacing.lg, gap: Spacing.md },
   avatar: {
-    width: isSmall ? 52 : 60, height: isSmall ? 52 : 60,
-    borderRadius: isSmall ? 26 : 30,
+    width: 60, height: 60, borderRadius: 30,
     backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center',
     borderWidth: 2, borderColor: 'rgba(255,255,255,0.3)',
   },
-  avatarLetter: { fontSize: isSmall ? 22 : 26, fontWeight: '800', color: '#FFF' },
+  avatarLetter: { fontSize: 26, fontWeight: '800', color: '#FFF' },
   profileInfo:  { flex: 1 },
-  profileName:  { ...Typography.bodyBold, color: '#FFF', fontSize: isSmall ? 15 : 17 },
+  profileName:  { ...Typography.bodyBold, color: '#FFF', fontSize: 17 },
   profileEmail: { ...Typography.caption, color: 'rgba(255,255,255,0.75)', marginTop: 2 },
   editBtn:      { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
 
   section:      { marginBottom: Spacing.xl },
   sectionTitle: { ...Typography.label, color: Colors.textMuted, marginBottom: Spacing.sm },
   group: { backgroundColor: Colors.surfaceElevated, borderRadius: BorderRadius.lg, borderWidth: 1, borderColor: Colors.border, overflow: 'hidden' },
-  row:   { flexDirection: 'row', alignItems: 'center', padding: isSmall ? Spacing.sm : Spacing.md },
+  row:   { flexDirection: 'row', alignItems: 'center', padding: Spacing.md },
   rowBorder: { borderBottomWidth: 1, borderBottomColor: Colors.border },
   rowIcon:   { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', marginRight: Spacing.sm },
   rowText:   { flex: 1 },
-  rowLabel:  { ...Typography.bodyBold, color: Colors.text, fontSize: isSmall ? 14 : 16 },
-  rowSub:    { ...Typography.caption, color: Colors.textMuted, marginTop: 2, fontSize: isSmall ? 11 : 12 },
+  rowLabel:  { ...Typography.bodyBold, color: Colors.text, fontSize: 15 },
+  rowSub:    { ...Typography.caption, color: Colors.textMuted, marginTop: 2, fontSize: 12 },
 
   infoCard: { borderRadius: BorderRadius.lg, overflow: 'hidden', borderWidth: 1, borderColor: Colors.border, marginBottom: Spacing.md },
   infoGrad: { flexDirection: 'row', alignItems: 'center', padding: Spacing.md, gap: Spacing.sm },

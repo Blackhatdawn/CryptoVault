@@ -5,6 +5,8 @@ import { useEffect } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { WalletProvider } from '@/contexts/WalletContext';
+import { AppLockProvider } from '@/contexts/AppLockContext';
+import { AppLockOverlay } from '@/components/AppLockOverlay';
 import { AlertProvider } from '@/template';
 import { useAuth } from '@/hooks/useAuth';
 import { Colors } from '@/constants/theme';
@@ -68,6 +70,10 @@ function NavigationGuard() {
       <Stack.Screen name="security-settings" options={{ headerShown: false }} />
       <Stack.Screen name="edit-profile"      options={{ headerShown: false }} />
       <Stack.Screen name="pin-setup"         options={{ headerShown: false }} />
+      <Stack.Screen name="kyc"              options={{ headerShown: false }} />
+      <Stack.Screen name="statements"       options={{ headerShown: false }} />
+      <Stack.Screen name="change-password"  options={{ headerShown: false }} />
+      <Stack.Screen name="payment-methods"  options={{ headerShown: false }} />
     </Stack>
   );
 }
@@ -87,8 +93,11 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <AuthProvider>
           <WalletProvider>
-            <StatusBar style="light" />
-            <NavigationGuard />
+            <AppLockProvider>
+              <StatusBar style="light" />
+              <NavigationGuard />
+              <AppLockOverlay />
+            </AppLockProvider>
           </WalletProvider>
         </AuthProvider>
       </SafeAreaProvider>
