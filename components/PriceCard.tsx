@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Colors, BorderRadius, Typography, Spacing, Shadows, CryptoGradients } from '@/constants/theme';
+import { Colors, BorderRadius, Typography, Spacing, CryptoGradients } from '@/constants/theme';
 import type { CryptoPrice } from '@/types';
 
 const CRYPTO_ICONS: Record<string, string> = {

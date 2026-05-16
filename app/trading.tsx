@@ -3,14 +3,16 @@ import {
   View, Text, StyleSheet, ScrollView, Pressable, Alert, Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter , useLocalSearchParams } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { FadeInDown, FadeIn, ZoomIn } from 'react-native-reanimated';
+import Animated, { FadeInDown, ZoomIn } from 'react-native-reanimated';
 import { useWallet } from '@/hooks/useWallet';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Colors, Typography, Spacing, BorderRadius, Shadows } from '@/constants/theme';
+
+import { api } from '@/services/api';
 
 const { width } = Dimensions.get('window');
 const isSmall = width < 375;
@@ -20,9 +22,6 @@ type OrderSide = 'buy' | 'sell';
 
 const SYMBOLS = ['BTC','ETH','USDT','BNB','SOL'];
 const PCT_BTNS = ['25%','50%','75%','100%'];
-
-import { api } from '@/services/api';
-import { useLocalSearchParams } from 'expo-router';
 
 export default function TradingScreen() {
   const router = useRouter();

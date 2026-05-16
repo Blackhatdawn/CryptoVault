@@ -8,7 +8,10 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "typecheck": "tsc --noEmit",
+    "export:web": "expo export --platform web",
+    "validate": "pnpm lint && pnpm typecheck && pnpm export:web"
   },
   "dependencies": {
     "@apollo/client": "^3.4.10",
@@ -154,5 +157,6 @@
     "react-dev-inspector": "^2.0.1",
     "typescript": "~5.8.3"
   },
-  "private": true
+  "private": true,
+  "packageManager": "pnpm@10.28.1"
 }

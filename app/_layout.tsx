@@ -36,7 +36,7 @@ function NavigationGuard() {
     } else if (isAuthenticated && (topSegment === 'auth' || topSegment === 'onboarding')) {
       router.replace('/(tabs)');
     }
-  }, [isAuthenticated, isLoading, segments]);
+  }, [isAuthenticated, isLoading, router, segments]);
 
   if (isLoading) {
     return (

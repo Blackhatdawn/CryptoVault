@@ -7,7 +7,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { storage as SecureStore } from '@/utils/storage';
-import { Colors, Typography, Spacing, BorderRadius, Shadows } from '@/constants/theme';
+import { Colors, Typography, Spacing, Shadows } from '@/constants/theme';
 
 const PIN_LENGTH = 6;
 const KEYPAD = [

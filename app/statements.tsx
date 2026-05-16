@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Pressable, Alert, Platform,
-  ActivityIndicator, useWindowDimensions,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -41,8 +41,6 @@ function generateMonths(): MonthSummary[] {
 
 export default function StatementsScreen() {
   const router    = useRouter();
-  const { width } = useWindowDimensions();
-  const isSmall   = width < 375;
 
   const [loading, setLoading]         = useState(true);
   const [downloading, setDownloading] = useState(false);

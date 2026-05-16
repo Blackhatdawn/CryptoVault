@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, Pressable, Switch, Alert, useWindowDimensions,
+  View, Text, StyleSheet, ScrollView, Pressable, Switch, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -12,8 +12,6 @@ import { Colors, Typography, Spacing, BorderRadius, Shadows } from '@/constants/
 
 export default function SettingsScreen() {
   const router = useRouter();
-  const { width } = useWindowDimensions();
-  const isSmall = width < 375;
   const { user, logout, biometricEnabled, enableBiometric } = useAuth();
   const [loading, setLoading]   = useState(false);
   const [darkMode, setDarkMode] = useState(true);

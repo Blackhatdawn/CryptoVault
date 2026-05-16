@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Pressable,
-  TextInput, Alert, useWindowDimensions,
+  TextInput, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -20,7 +20,6 @@ const REQUIREMENTS = [
 
 export default function ChangePasswordScreen() {
   const router    = useRouter();
-  const { width } = useWindowDimensions();
 
   const [current,  setCurrent]  = useState('');
   const [next,     setNext]     = useState('');
@@ -120,7 +119,7 @@ export default function ChangePasswordScreen() {
               <MaterialIcons name="lock-reset" size={36} color="#FFF" />
             </LinearGradient>
             <Text style={styles.iconTitle}>Secure Your Account</Text>
-            <Text style={styles.iconSub}>Choose a strong, unique password you don't use elsewhere.</Text>
+            <Text style={styles.iconSub}>Choose a strong, unique password you do not use elsewhere.</Text>
           </Animated.View>
 
           {/* ─── Form Card ─── */}

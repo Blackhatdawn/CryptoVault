@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TextInput,
-  Pressable, useWindowDimensions,
+  Pressable, type ListRenderItem,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -10,7 +10,8 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useLivePrices } from '@/hooks/useLivePrices';
 import { PriceCard } from '@/components/PriceCard';
 import { SkeletonLoader } from '@/components/SkeletonLoader';
-import { Colors, Typography, Spacing, BorderRadius, Shadows } from '@/constants/theme';
+import type { CryptoPrice } from '@/types';
+import { Colors, Typography, Spacing, BorderRadius } from '@/constants/theme';
 
 type SortKey = 'price' | 'change' | 'name';
 
@@ -22,8 +23,6 @@ const FILTER_TABS = [
 ];
 
 export default function MarketsScreen() {
-  const { width } = useWindowDimensions();
-  const isSmall = width < 375;
   const { prices, isLoading: pricesLoading } = useLivePrices();
   const [query, setQuery]   = useState('');
   const [sort, setSort]     = useState<SortKey>('price');
@@ -63,6 +62,14 @@ export default function MarketsScreen() {
   const handleClearSearch = useCallback(() => {
     setQuery('');
   }, []);
+
+  const keyExtractor = useCallback((item: CryptoPrice) => item.symbol, []);
+
+  const renderPriceItem = useCallback<ListRenderItem<CryptoPrice>>(({ item, index }) => (
+    <Animated.View entering={FadeInDown.delay(index * 30).duration(200)}>
+      <PriceCard price={item} />
+    </Animated.View>
+  ), []);
 
   return (
     <View style={styles.root}>
@@ -163,12 +170,8 @@ export default function MarketsScreen() {
         ) : (
           <FlatList
             data={filtered}
-            keyExtractor={useCallback((item) => item.symbol, [])}
-            renderItem={useCallback(({ item, index }) => (
-              <Animated.View entering={FadeInDown.delay(index * 30).duration(200)}>
-                <PriceCard price={item} />
-              </Animated.View>
-            ), [])}
+            keyExtractor={keyExtractor}
+            renderItem={renderPriceItem}
             contentContainerStyle={styles.listPad}
             showsVerticalScrollIndicator={false}
             ListEmptyComponent={

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView,
-  Pressable, Alert, useWindowDimensions,
+  Pressable, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -20,8 +20,6 @@ type MenuSection = {
 
 export default function AccountScreen() {
   const router = useRouter();
-  const { width } = useWindowDimensions();
-  const isSmall = width < 375;
   const { user, logout } = useAuth();
   const { balance } = useWallet();
 

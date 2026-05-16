@@ -102,7 +102,6 @@ const TYPE_CONFIG = {
 export default function NotificationsScreen() {
   const router = useRouter();
   const [notes, setNotes] = useState<Notification[]>(MOCK);
-  const [apiLoaded, setApiLoaded] = useState(false);
   const unread = notes.filter((n) => !n.read).length;
 
   useEffect(() => {
@@ -121,7 +120,6 @@ export default function NotificationsScreen() {
         );
         if (apiNotes.length > 0) {
           setNotes(apiNotes);
-          setApiLoaded(true);
         }
       } catch {
         // API not available — keep showing mock data
@@ -234,7 +232,7 @@ export default function NotificationsScreen() {
                   <View
                     style={[
                       styles.iconWrap,
-                      { shadowColor: cfg.gradient[1], ...Shadows.sm },
+                      { ...Shadows.sm, shadowColor: cfg.gradient[1] },
                     ]}
                   >
                     <LinearGradient

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, Text, StyleSheet, ActivityIndicator, ViewStyle, TextStyle, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Colors, BorderRadius, Typography, Spacing, Shadows } from '@/constants/theme';
+import { Colors, BorderRadius, Spacing } from '@/constants/theme';
 
 interface ButtonProps {
   title: string;

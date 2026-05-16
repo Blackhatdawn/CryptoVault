@@ -140,7 +140,7 @@ export default function DepositScreen() {
                   <MaterialIcons name="security" size={20} color={Colors.info} />
                 </View>
                 <Text style={styles.infoText}>
-                  You'll receive a secure payment address to send your crypto. Funds will be credited after network confirmations.
+                  You will receive a secure payment address to send your crypto. Funds will be credited after network confirmations.
                 </Text>
               </View>
             </>

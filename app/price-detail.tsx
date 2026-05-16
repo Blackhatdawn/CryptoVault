@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView,
   Pressable, Dimensions,
@@ -8,7 +8,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { LineChart } from 'react-native-chart-kit';
-import Animated, { FadeInDown, FadeIn, ZoomIn } from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { Colors, Typography, Spacing, BorderRadius, Shadows } from '@/constants/theme';
 import { Button } from '@/components/ui/Button';
 import { api } from '@/services/api';
@@ -40,19 +40,7 @@ export default function PriceDetailScreen() {
   const change     = parseFloat(params.change as string) || 0;
   const isPositive = change >= 0;
 
-  useEffect(() => { fetchHistory(); }, [timeFrame]);
-
-  const fetchHistory = async () => {
-    setLoading(true);
-    try {
-      const data = await api.getPriceHistory(symbol, timeFrame);
-      setHistory(data);
-    } catch {
-      setHistory(mockHistory());
-    } finally { setLoading(false); }
-  };
-
-  const mockHistory = () => {
+  const mockHistory = useCallback(() => {
     const pts = timeFrame === '1H' ? 12 : timeFrame === '24H' ? 24 : 30;
     let p = price;
     return Array.from({ length: pts }, () => {
@@ -60,7 +48,19 @@ export default function PriceDetailScreen() {
       p = p * (1 + (Math.random() - 0.5) * v);
       return p;
     });
-  };
+  }, [price, timeFrame]);
+
+  const fetchHistory = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await api.getPriceHistory(symbol, timeFrame);
+      setHistory(data);
+    } catch {
+      setHistory(mockHistory());
+    } finally { setLoading(false); }
+  }, [mockHistory, symbol, timeFrame]);
+
+  useEffect(() => { fetchHistory(); }, [fetchHistory]);
 
   const chartData = {
     labels: [],

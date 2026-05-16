@@ -37,11 +37,11 @@ export default function AuthScreen() {
       const done = await AsyncStorage.getItem('@cryptovault/onboarding_completed');
       if (!done) router.replace('/onboarding');
     })();
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     if (isAuthenticated) router.replace('/(tabs)');
-  }, [isAuthenticated]);
+  }, [isAuthenticated, router]);
 
   const handleSubmit = async () => {
     setError('');
