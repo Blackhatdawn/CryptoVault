@@ -1,5 +1,6 @@
 import { ScrollViewStyleReset } from 'expo-router/html';
 import type { PropsWithChildren } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 
 /**
  * Custom HTML shell for Expo Router's web export.
@@ -39,7 +40,10 @@ export default function Root({ children }: PropsWithChildren) {
           }}
         />
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        <Analytics />
+      </body>
     </html>
   );
 }
