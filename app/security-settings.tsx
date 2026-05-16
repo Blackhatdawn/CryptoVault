@@ -3,11 +3,8 @@ import { View, Text, StyleSheet, ScrollView, Pressable, Switch, Alert } from 're
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
-import * as LocalAuthentication from 'expo-local-authentication';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '@/hooks/useAuth';
 import { Colors, Typography, Spacing, BorderRadius } from '@/constants/theme';
-import { Button } from '@/components/ui/Button';
 
 export default function SecuritySettingsScreen() {
   const router = useRouter();

@@ -21,7 +21,7 @@ function Shimmer() {
   const progress = useSharedValue(0);
   useEffect(() => {
     progress.value = withRepeat(withTiming(1, { duration: 1600 }), -1, false);
-  }, []);
+  }, [progress]);
 
   const anim = useAnimatedStyle(() => ({
     transform: [{ translateX: interpolate(progress.value, [0,1], [-width*1.2, width*1.2]) }],

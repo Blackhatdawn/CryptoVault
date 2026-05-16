@@ -6,7 +6,6 @@ import {
   FlatList,
   RefreshControl,
   Pressable,
-  useWindowDimensions,
   ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -21,7 +20,6 @@ import {
   Typography,
   Spacing,
   BorderRadius,
-  Shadows,
 } from "@/constants/theme";
 
 const FILTER_TABS = [
@@ -32,8 +30,6 @@ const FILTER_TABS = [
 ];
 
 export default function HistoryScreen() {
-  const { width } = useWindowDimensions();
-  const isSmall = width < 375;
   const { transactions, isLoading, isRefreshing, refresh, loadMore, hasMore } =
     useTransactions();
   const [activeFilter, setActiveFilter] = useState("all");

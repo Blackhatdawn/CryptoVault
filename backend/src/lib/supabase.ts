@@ -1,5 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
-import ws from 'ws';
+import WebSocket from 'ws';
+import type { WebSocketLikeConstructor } from '@supabase/realtime-js';
+
+const realtimeTransport = WebSocket as unknown as WebSocketLikeConstructor;
 
 const SUPABASE_URL             = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -16,7 +19,7 @@ if (!SUPABASE_ANON_KEY)         throw new Error('SUPABASE_ANON_KEY is required')
  */
 export const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
   auth: { autoRefreshToken: false, persistSession: false },
-  realtime: { transport: ws },
+  realtime: { transport: realtimeTransport },
 });
 
 /**
@@ -26,5 +29,5 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
  */
 export const supabaseAuth = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: { autoRefreshToken: false, persistSession: false },
-  realtime: { transport: ws },
+  realtime: { transport: realtimeTransport },
 });

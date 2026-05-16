@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, Pressable, Vibration, Modal,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAppLock } from '@/contexts/AppLockContext';
-import { Colors, Typography, Spacing, BorderRadius, Shadows } from '@/constants/theme';
+import { Colors, Typography, Spacing, Shadows } from '@/constants/theme';
 
 const PIN_LENGTH = 6;
 const KEYPAD = [
@@ -22,20 +22,20 @@ export function AppLockOverlay() {
   const [mode, setMode]             = useState<'biometric' | 'pin'>('biometric');
   const [unlocking, setUnlocking]   = useState(false);
 
-  useEffect(() => {
-    if (isLocked && mode === 'biometric') {
-      triggerBiometric();
-    }
-  }, [isLocked]);
-
-  const triggerBiometric = async () => {
+  const triggerBiometric = useCallback(async () => {
     setUnlocking(true);
     const success = await unlock();
     setUnlocking(false);
     if (!success) {
       setMode('pin');
     }
-  };
+  }, [unlock]);
+
+  useEffect(() => {
+    if (isLocked && mode === 'biometric') {
+      triggerBiometric();
+    }
+  }, [isLocked, mode, triggerBiometric]);
 
   const handleKey = async (key: string) => {
     if (key === '⌫') {

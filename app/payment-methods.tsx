@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Pressable,
-  Alert, useWindowDimensions,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -23,7 +23,6 @@ const MOCK_CARDS: Card[] = [];
 
 export default function PaymentMethodsScreen() {
   const router    = useRouter();
-  const { width } = useWindowDimensions();
 
   const [cards, setCards] = useState<Card[]>(MOCK_CARDS);
 

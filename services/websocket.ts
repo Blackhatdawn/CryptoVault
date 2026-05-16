@@ -1,11 +1,10 @@
 import io, { Socket } from 'socket.io-client';
-import { API_BASE_URL } from '@/constants/config';
+import { WEBSOCKET_CONFIG } from '@/constants/config';
 
 class WebSocketService {
   private socket: Socket | null = null;
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
-  private reconnectDelay = 1000;
   private listeners: Map<string, Set<Function>> = new Map();
 
   connect(token?: string) {
@@ -13,15 +12,15 @@ class WebSocketService {
       return;
     }
 
-    const wsUrl = API_BASE_URL.replace('http', 'ws').replace('https', 'wss');
-
-    this.socket = io(wsUrl, {
-      path: '/socket.io',
+    this.socket = io(WEBSOCKET_CONFIG.URL, {
+      path: WEBSOCKET_CONFIG.PATH,
       transports: ['websocket', 'polling'],
       auth: token ? { token } : undefined,
-      reconnection: true,
-      reconnectionDelay: this.reconnectDelay,
-      reconnectionAttempts: this.maxReconnectAttempts,
+      reconnection: WEBSOCKET_CONFIG.RECONNECTION,
+      reconnectionDelay: WEBSOCKET_CONFIG.RECONNECTION_DELAY,
+      reconnectionAttempts: WEBSOCKET_CONFIG.RECONNECTION_ATTEMPTS,
+      reconnectionDelayMax: WEBSOCKET_CONFIG.RECONNECTION_DELAY_MAX,
+      timeout: WEBSOCKET_CONFIG.TIMEOUT,
     });
 
     this.setupEventHandlers();

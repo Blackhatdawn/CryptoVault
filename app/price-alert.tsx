@@ -36,10 +36,10 @@ export default function PriceAlertScreen() {
         target_price: parseFloat(targetPrice),
       });
       
-      if (result.success || result.data) {
+      if (result.data || result.message) {
         Alert.alert(
           'Alert Created',
-          `You'll be notified when ${selectedCrypto} goes ${condition} $${targetPrice}`,
+          `You will be notified when ${selectedCrypto} goes ${condition} $${targetPrice}`,
           [{ text: 'OK', onPress: () => router.back() }]
         );
       } else {
@@ -149,7 +149,7 @@ export default function PriceAlertScreen() {
           <View style={styles.previewCard}>
             <MaterialIcons name="notifications-active" size={32} color={Colors.primary} />
             <Text style={styles.previewText}>
-              You'll receive a notification when {selectedCrypto} {condition === 'above' ? 'rises above' : 'falls below'}
+              You will receive a notification when {selectedCrypto} {condition === 'above' ? 'rises above' : 'falls below'}
             </Text>
             <Text style={styles.previewPrice}>${targetPrice}</Text>
           </View>
@@ -167,7 +167,7 @@ export default function PriceAlertScreen() {
         <View style={styles.infoBox}>
           <MaterialIcons name="info-outline" size={20} color={Colors.info} />
           <Text style={styles.infoText}>
-            You'll receive a push notification when the price condition is met. You can manage your alerts in Settings.
+            You will receive a push notification when the price condition is met. You can manage your alerts in Settings.
           </Text>
         </View>
       </ScrollView>

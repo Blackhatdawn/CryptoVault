@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Pressable,
-  TextInput, Alert, useWindowDimensions,
+  TextInput, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -27,8 +27,6 @@ const ID_TYPES = [
 export default function KYCScreen() {
   const router = useRouter();
   const { user }  = useAuth();
-  const { width } = useWindowDimensions();
-  const isSmall   = width < 375;
 
   const [step, setStep]       = useState(0);
   const [loading, setLoading] = useState(false);
