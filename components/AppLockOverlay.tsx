@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  View, Text, StyleSheet, Pressable, Vibration, Modal,
+  View, Text, StyleSheet, Pressable, Vibration, Modal, Image,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -70,9 +70,13 @@ export function AppLockOverlay() {
 
         {/* Logo */}
         <View style={styles.top}>
-          <LinearGradient colors={['#7C3AED', '#4F46E5']} style={styles.logoCircle}>
-            <MaterialIcons name="account-balance-wallet" size={36} color="#FFF" />
-          </LinearGradient>
+          <View style={styles.logoWrapper}>
+            <Image
+              source={require('@/assets/images/logo.png')}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
+          </View>
           <Text style={styles.appName}>CryptoVault</Text>
           <Text style={styles.subtitle}>
             {mode === 'biometric' ? 'Authenticate to continue' : 'Enter your PIN'}
@@ -154,10 +158,16 @@ const styles = StyleSheet.create({
   },
 
   top: { alignItems: 'center', gap: Spacing.sm },
-  logoCircle: {
-    width: 80, height: 80, borderRadius: 40,
-    alignItems: 'center', justifyContent: 'center',
-    marginBottom: Spacing.sm, ...Shadows.primaryGlow,
+  logoWrapper: {
+    width: 100,
+    height: 100,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.sm,
+  },
+  logoImage: {
+    width: 90,
+    height: 90,
   },
   appName: { fontSize: 28, fontWeight: '800', color: Colors.text, letterSpacing: -0.5 },
   subtitle: { ...Typography.body, color: Colors.textSecondary },

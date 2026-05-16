@@ -1,5 +1,20 @@
 // CryptoVault Enterprise Theme — Premium Dark Crypto Design System
 
+// ─── Brand Identity ───────────────────────────────────────────────────────────
+export const Brand = {
+  name: 'CryptoVault',
+  tagline: 'Enterprise Digital Wallet',
+  copyright: '2026 CryptoVault Inc.',
+  colors: {
+    gold: '#F59E0B',
+    goldLight: '#FBBF24',
+    goldDark: '#D97706',
+    charcoal: '#1F2937',
+    charcoalDark: '#111827',
+    navy: '#08091A',
+  },
+};
+
 export const Colors = {
   // ─── Backgrounds ────────────────────────────────────────────────────────────
   background:        '#08091A',   // Deepest navy-black
