@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Pressable, useWindowDimensions } from 'react-native';
+import { View, Text, StyleSheet, Pressable, useWindowDimensions, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Colors, Typography, Spacing, BorderRadius } from '@/constants/theme';
+import { Colors, Typography, Spacing, BorderRadius, Shadows } from '@/constants/theme';
 
 const SLIDES = [
   {
@@ -77,7 +77,14 @@ export default function OnboardingScreen() {
 
         {/* Skip */}
         <View style={styles.header}>
-          <View style={{ width: 80 }} />
+          <View style={styles.brandMark}>
+            <Image
+              source={require('@/assets/images/logo.png')}
+              style={styles.headerLogo}
+              resizeMode="contain"
+            />
+            <Text style={styles.brandName}>CryptoVault</Text>
+          </View>
           <Pressable onPress={handleSkip} style={styles.skipButton}>
             <Text style={styles.skipText}>Skip</Text>
           </Pressable>
@@ -167,6 +174,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.sm,
+  },
+  brandMark: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+  },
+  headerLogo: {
+    width: 32,
+    height: 32,
+  },
+  brandName: {
+    ...Typography.bodyBold,
+    color: Colors.text,
+    fontSize: 16,
+    letterSpacing: -0.3,
   },
   skipButton: { paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm },
   skipText:   { ...Typography.body, color: Colors.textSecondary, fontWeight: '600' },

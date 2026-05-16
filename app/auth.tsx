@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, KeyboardAvoidingView,
-  Platform, Pressable, Dimensions, TextInput,
+  Platform, Pressable, Dimensions, TextInput, Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -330,9 +330,11 @@ export default function AuthScreen() {
               <Animated.View style={logoPulseStyle}>
                 <View style={styles.logoRingOuter}>
                   <View style={styles.logoRingInner}>
-                    <LinearGradient colors={['#7C3AED','#4F46E5','#2563EB']} style={styles.logoGrad}>
-                      <MaterialIcons name="account-balance-wallet" size={isSmall ? 34 : 42} color="#FFF" />
-                    </LinearGradient>
+                    <Image
+                      source={require('@/assets/images/logo.png')}
+                      style={styles.logoImage}
+                      resizeMode="contain"
+                    />
                   </View>
                 </View>
               </Animated.View>
@@ -626,14 +628,14 @@ const styles = StyleSheet.create({
   logoRingInner: {
     width: isSmall ? 86 : 102, height: isSmall ? 86 : 102,
     borderRadius: isSmall ? 43 : 51,
-    backgroundColor: 'rgba(124,58,237,0.15)',
-    borderWidth: 1, borderColor: 'rgba(124,58,237,0.28)',
+    backgroundColor: 'rgba(245,158,11,0.08)',
+    borderWidth: 1, borderColor: 'rgba(245,158,11,0.2)',
     alignItems: 'center', justifyContent: 'center',
+    overflow: 'hidden',
   },
-  logoGrad: {
-    width: isSmall ? 68 : 82, height: isSmall ? 68 : 82,
-    borderRadius: isSmall ? 34 : 41,
-    alignItems: 'center', justifyContent: 'center', ...Shadows.primaryGlow,
+  logoImage: {
+    width: isSmall ? 70 : 85,
+    height: isSmall ? 70 : 85,
   },
   appName: {
     fontSize: isSmall ? 26 : 32, fontWeight: '800', color: Colors.text,
