@@ -2,7 +2,7 @@ import { Stack, useRouter, useSegments } from 'expo-router';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, ActivityIndicator, StyleSheet, Platform } from 'react-native';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { WalletProvider } from '@/contexts/WalletContext';
 import { AppLockProvider } from '@/contexts/AppLockContext';
@@ -10,6 +10,7 @@ import { AppLockOverlay } from '@/components/AppLockOverlay';
 import { AlertProvider } from '@/template';
 import { useAuth } from '@/hooks/useAuth';
 import { Colors } from '@/constants/theme';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 
 // Routes that don't require authentication
 const PUBLIC_ROUTES = new Set(['auth', 'onboarding', 'splash', '+not-found']);
@@ -97,6 +98,7 @@ export default function RootLayout() {
               <StatusBar style="light" />
               <NavigationGuard />
               <AppLockOverlay />
+              {Platform.OS === 'web' && <SpeedInsights />}
             </AppLockProvider>
           </WalletProvider>
         </AuthProvider>
