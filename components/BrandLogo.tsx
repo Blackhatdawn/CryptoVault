@@ -20,7 +20,7 @@ export function BrandLogo({ size = 'medium', showText = false, variant = 'icon' 
   return (
     <View style={[styles.container, { width: logoSize, height: logoSize }]}>
       <Image
-        source={require('@/assets/images/logo.webp')}
+        source={require('@/assets/images/logo.png')}
         style={{ width: logoSize, height: logoSize, resizeMode: 'contain' }}
         accessibilityLabel="CryptoVault Logo"
       />
