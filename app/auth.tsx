@@ -12,6 +12,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { BrandLogo } from '@/components/BrandLogo';
 import { Colors, Typography, Spacing, BorderRadius, Shadows } from '@/constants/theme';
 
 const { width, height } = Dimensions.get('window');
@@ -81,13 +82,7 @@ export default function AuthScreen() {
 
             {/* ─── Logo / Branding ────────────────────────────────────── */}
             <Animated.View entering={FadeIn.duration(600)} style={styles.brand}>
-              <View style={styles.logoRingOuter}>
-                <View style={styles.logoRingInner}>
-                  <LinearGradient colors={['#7C3AED','#4F46E5','#2563EB']} style={styles.logoGrad}>
-                    <MaterialIcons name="account-balance-wallet" size={isSmall ? 36 : 44} color="#FFF" />
-                  </LinearGradient>
-                </View>
-              </View>
+              <BrandLogo size={isSmall ? 'medium' : 'large'} />
               <Text style={styles.appName}>CryptoVault</Text>
               <Text style={styles.tagline}>Enterprise Digital Wallet</Text>
 
@@ -233,23 +228,6 @@ const styles = StyleSheet.create({
 
   // Branding
   brand: { alignItems: 'center', marginBottom: Spacing.xl, paddingTop: isSmall ? Spacing.sm : Spacing.lg },
-  logoRingOuter: {
-    width: isSmall ? 110 : 130, height: isSmall ? 110 : 130,
-    borderRadius: isSmall ? 55 : 65,
-    backgroundColor: 'rgba(124,58,237,0.1)',
-    alignItems: 'center', justifyContent: 'center', marginBottom: Spacing.md,
-  },
-  logoRingInner: {
-    width: isSmall ? 88 : 104, height: isSmall ? 88 : 104,
-    borderRadius: isSmall ? 44 : 52,
-    backgroundColor: 'rgba(124,58,237,0.18)',
-    alignItems: 'center', justifyContent: 'center',
-  },
-  logoGrad: {
-    width: isSmall ? 70 : 84, height: isSmall ? 70 : 84,
-    borderRadius: isSmall ? 35 : 42,
-    alignItems: 'center', justifyContent: 'center', ...Shadows.primaryGlow,
-  },
   appName:  { fontSize: isSmall ? 26 : 32, fontWeight: '800', color: Colors.text, letterSpacing: -0.8, marginBottom: 4 },
   tagline:  { ...Typography.caption, color: Colors.textSecondary, marginBottom: Spacing.md },
   featurePills: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: Spacing.xs, maxWidth: 320 },

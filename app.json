@@ -4,11 +4,11 @@
     "slug": "cryptovault-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/onboarding-hero.png",
+    "icon": "./assets/images/logo.webp",
     "userInterfaceStyle": "dark",
     "scheme": "cryptovault",
     "splash": {
-      "image": "./assets/images/onboarding-hero.png",
+      "image": "./assets/images/logo.webp",
       "resizeMode": "contain",
       "backgroundColor": "#0a0a0a"
     },
@@ -25,7 +25,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/onboarding-hero.png",
+        "foregroundImage": "./assets/images/logo.webp",
         "backgroundColor": "#0a0a0a"
       },
       "package": "com.cryptovault.mobile",
@@ -36,7 +36,7 @@
       ]
     },
     "web": {
-      "favicon": "./assets/images/onboarding-hero.png",
+      "favicon": "./assets/images/logo.webp",
       "bundler": "metro"
     },
     "plugins": [
