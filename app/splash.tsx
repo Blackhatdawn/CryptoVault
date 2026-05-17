@@ -2,8 +2,8 @@ import React, { useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withSequence } from 'react-native-reanimated';
-import { MaterialIcons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing } from '@/constants/theme';
+import { BrandLogo } from '@/components/BrandLogo';
 
 export default function SplashScreen() {
   const router = useRouter();
@@ -34,11 +34,9 @@ export default function SplashScreen() {
   return (
     <View style={styles.container}>
       <Animated.View style={[styles.logoContainer, logoStyle]}>
-        <View style={styles.iconCircle}>
-          <MaterialIcons name="account-balance-wallet" size={64} color={Colors.primary} />
-        </View>
+        <BrandLogo size="large" />
         <Text style={styles.appName}>CryptoVault</Text>
-        <Text style={styles.tagline}>Secure Digital Wallet</Text>
+        <Text style={styles.tagline}>Enterprise Digital Wallet</Text>
       </Animated.View>
 
       <View style={styles.footer}>
@@ -58,20 +56,12 @@ const styles = StyleSheet.create({
   logoContainer: {
     alignItems: 'center',
   },
-  iconCircle: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: `${Colors.primary}20`,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing.lg,
-  },
   appName: {
     fontSize: 36,
     fontWeight: '700',
     color: Colors.text,
     marginBottom: Spacing.xs,
+    marginTop: Spacing.lg,
     letterSpacing: -0.5,
   },
   tagline: {
