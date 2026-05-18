@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, RefreshControl,
   Pressable, useWindowDimensions,
@@ -40,18 +40,24 @@ export default function WalletScreen() {
     setRefreshing(false);
   }, [refreshWallet]);
 
-  const topPrices = Array.isArray(prices) ? prices.slice(0, 5) : [];
+  // Memoize top prices and strip coin data to prevent redundant array operations
+  // and stable references for child component memoization.
+  const topPrices = useMemo(() =>
+    Array.isArray(prices) ? prices.slice(0, 5) : []
+  , [prices]);
 
-  const stripCoins = ['BTC', 'ETH', 'SOL'].map(sym => {
-    const p = Array.isArray(prices) ? prices.find((x: any) => x.symbol === sym) : null;
-    const pct = p ? parseFloat(p.changePercent24Hr || '0') : null;
-    return {
-      label: sym,
-      pct: pct !== null ? `${pct >= 0 ? '+' : ''}${pct.toFixed(2)}%` : '---',
-      pos: pct !== null ? pct >= 0 : true,
-      color: CryptoGradients[sym as keyof typeof CryptoGradients] || [Colors.primary, Colors.primaryMid],
-    };
-  });
+  const stripCoins = useMemo(() =>
+    ['BTC', 'ETH', 'SOL'].map(sym => {
+      const p = Array.isArray(prices) ? prices.find((x: any) => x.symbol === sym) : null;
+      const pct = p ? parseFloat(p.changePercent24Hr || '0') : null;
+      return {
+        label: sym,
+        pct: pct !== null ? `${pct >= 0 ? '+' : ''}${pct.toFixed(2)}%` : '---',
+        pos: pct !== null ? pct >= 0 : true,
+        color: CryptoGradients[sym as keyof typeof CryptoGradients] || [Colors.primary, Colors.primaryMid],
+      };
+    })
+  , [prices]);
 
   const formatBalance = (val: number) =>
     balanceHidden ? '••••••' : `$${val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
