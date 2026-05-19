@@ -1,0 +1,3 @@
+## 2025-05-15 - Memoizing High-Frequency List Items
+**Learning:** In applications with real-time data streams (like WebSockets updating every 100ms), parent components frequently trigger re-renders of large lists. If list items like `PriceCard` are not memoized, it causes an O(N) re-render cascade on every update, even for items whose data hasn't changed.
+**Action:** Always wrap central list items (`PriceCard`, `TransactionItem`) in `React.memo` when they are part of a high-frequency update loop. Ensure that the data provider (e.g., `useLivePrices`) preserves object references for unchanged items to make memoization effective.
