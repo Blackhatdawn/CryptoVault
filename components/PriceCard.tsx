@@ -16,7 +16,7 @@ interface PriceCardProps {
   price: CryptoPrice;
 }
 
-export function PriceCard({ price }: PriceCardProps) {
+export const PriceCard = React.memo(({ price }: PriceCardProps) => {
   const router = useRouter();
   const change = parseFloat(price.changePercent24Hr || '0');
   const isPositive = change >= 0;
@@ -82,7 +82,9 @@ export function PriceCard({ price }: PriceCardProps) {
       </View>
     </Pressable>
   );
-}
+});
+
+PriceCard.displayName = 'PriceCard';
 
 const styles = StyleSheet.create({
   wrapper: { marginBottom: 1 },
