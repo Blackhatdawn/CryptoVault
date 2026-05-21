@@ -16,7 +16,15 @@ interface PriceCardProps {
   price: CryptoPrice;
 }
 
-export function PriceCard({ price }: PriceCardProps) {
+/**
+ * PriceCard component displays real-time price information for a cryptocurrency.
+ * Wrapped in React.memo to prevent O(N) re-render cascades when the parent list
+ * updates due to frequent (100ms debounced) WebSocket price updates.
+ *
+ * Performance Impact: Reduces re-renders from O(N) to O(1) per price update,
+ * where N is the number of coins in the list.
+ */
+export const PriceCard = React.memo(({ price }: PriceCardProps) => {
   const router = useRouter();
   const change = parseFloat(price.changePercent24Hr || '0');
   const isPositive = change >= 0;
@@ -82,7 +90,9 @@ export function PriceCard({ price }: PriceCardProps) {
       </View>
     </Pressable>
   );
-}
+});
+
+PriceCard.displayName = 'PriceCard';
 
 const styles = StyleSheet.create({
   wrapper: { marginBottom: 1 },
